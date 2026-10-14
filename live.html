@@ -31,10 +31,16 @@ video{width:100%;aspect-ratio:16/9;background:#000;border-radius:12px}
 </div>
 <div class="grid" id="grid"></div>
 </div>
-<div class="note">前排频道为网络直连源，不经过家里，点开即播；江西本地台（江西新闻、都市等）经家里 N1 流畅版，需要家里 N1 和宽带在线。个别频道临时无信号时换一个试试，或告诉 Muse 换源。</div>
+<div class="note">前排频道为网络直连源（含港澳台），不经过家里，点开即播；江西本地台（江西新闻、都市等）经家里 N1 流畅版，需要家里 N1 和宽带在线。个别频道临时无信号时换一个试试，或告诉 Muse 换源。</div>
 <script>
 var CHANNELS=[
 ["江西卫视","https://kzhibo.pages.dev/channel/602?type=2"],
+["翡翠台","https://cdn3.indevs.in/stream/tvb/fct/"],
+["翡翠台 4K","https://cdn3.indevs.in/stream/tvb/fct4k/"],
+["人间卫视","https://5ddce30eb4b55.streamlock.net/bltvhd/bltv1/playlist.m3u8"],
+["TITV 原住民台","https://streamipcfapp.akamaized.net/live/_definst_/live_720/key_b1500.m3u8"],
+["唯心電視","https://mobile.ccdntech.com/transcoder/_definst_/vod164_Live/live/chunklist_w1177047531.m3u8"],
+["CGN 中文台","https://d3e05csss9c272.cloudfront.net/out/v1/f0bf71c57581470fb9379f603e8f5d83/CGNWebLiveCN.m3u8"],
 ["CCTV-1","https://kzhibo.pages.dev/channel/578?type=1"],
 ["CCTV-2","https://kzhibo.pages.dev/channel/579?type=1"],
 ["CCTV-3","https://kzhibo.pages.dev/channel/580?type=1"],
@@ -79,6 +85,23 @@ var CHANNELS=[
 ["甘肃卫视","https://kzhibo.pages.dev/channel/622?type=2"],
 ["新疆卫视","https://kzhibo.pages.dev/channel/623?type=2"],
 ["山西卫视","https://kzhibo.pages.dev/channel/624?type=2"],
+["湖南经视","https://phoneal.qing.mgtv.com/nn_live/nn_x64/Y2RuZXhfaWQ9YWxfaGxzX2xkdnQmZT02OTE0NjA0JnY9MSZpZD1ITldTWkdTVCZzPTcwN2RiYTc2YzJjNmJmMTQ4MmUyZGYzOWU2NWM3YWFi/HNJSMPP360.m3u8"],
+["湖南都市","https://phoneal.qing.mgtv.com/nn_live/nn_x64/Y2RuZXhfaWQ9YWxfaGxzX2xkdnQmZT02OTE0NjA0JnY9MSZpZD1ITldTWkdTVCZzPTcwN2RiYTc2YzJjNmJmMTQ4MmUyZGYzOWU2NWM3YWFi/HNDSMPP360.m3u8"],
+["湖南电视剧","https://phoneal.qing.mgtv.com/nn_live/nn_x64/Y2RuZXhfaWQ9YWxfaGxzX2xkdnQmZT02OTE0NjA0JnY9MSZpZD1ITldTWkdTVCZzPTcwN2RiYTc2YzJjNmJmMTQ4MmUyZGYzOWU2NWM3YWFi/HNDSJMPP360.m3u8"],
+["湖南娱乐","https://phoneal.qing.mgtv.com/nn_live/nn_x64/Y2RuZXhfaWQ9YWxfaGxzX2xkdnQmZT02OTE0NjA0JnY9MSZpZD1ITldTWkdTVCZzPTcwN2RiYTc2YzJjNmJmMTQ4MmUyZGYzOWU2NWM3YWFi/HNYLMPP360.m3u8"],
+["湖南电影","https://phoneal.qing.mgtv.com/nn_live/nn_x64/Y2RuZXhfaWQ9YWxfaGxzX2xkdnQmZT02OTE0NjA0JnY9MSZpZD1ITldTWkdTVCZzPTcwN2RiYTc2YzJjNmJmMTQ4MmUyZGYzOWU2NWM3YWFi/HNDYMPP360.m3u8"],
+["湖南国际","https://phoneal.qing.mgtv.com/nn_live/nn_x64/Y2RuZXhfaWQ9YWxfaGxzX2xkdnQmZT02OTE0NjA0JnY9MSZpZD1ITldTWkdTVCZzPTcwN2RiYTc2YzJjNmJmMTQ4MmUyZGYzOWU2NWM3YWFi/HNGJMPP360.m3u8"],
+["金鹰纪实","https://phoneal.qing.mgtv.com/nn_live/nn_x64/Y2RuZXhfaWQ9YWxfaGxzX2xkdnQmZT02OTE0NjA0JnY9MSZpZD1ITldTWkdTVCZzPTcwN2RiYTc2YzJjNmJmMTQ4MmUyZGYzOWU2NWM3YWFi/JYJSMPP360.m3u8"],
+["金鹰卡通","https://phoneal.qing.mgtv.com/nn_live/nn_x64/Y2RuZXhfaWQ9YWxfaGxzX2xkdnQmZT02OTE0NjA0JnY9MSZpZD1ITldTWkdTVCZzPTcwN2RiYTc2YzJjNmJmMTQ4MmUyZGYzOWU2NWM3YWFi/JYKTMPP360.m3u8"],
+["长沙新闻","https://phoneal.qing.mgtv.com/nn_live/nn_x64/Y2RuZXhfaWQ9YWxfaGxzX2xkdnQmZT02OTE0NjA0JnY9MSZpZD1ITldTWkdTVCZzPTcwN2RiYTc2YzJjNmJmMTQ4MmUyZGYzOWU2NWM3YWFi/CSXWMPP360.m3u8"],
+["苏州4K","https://live-auth.51kandianshi.com/szgd/csztv4k_hd.m3u8"],
+["河北4K","https://event.pull.hebtv.com:443/live/live101.m3u8"],
+["快乐垂钓","https://phoneal.qing.mgtv.com/nn_live/nn_x64/Y2RuZXhfaWQ9YWxfaGxzX2xkdnQmZT02OTE0NjA0JnY9MSZpZD1ITldTWkdTVCZzPTcwN2RiYTc2YzJjNmJmMTQ4MmUyZGYzOWU2NWM3YWFi/KLCDMPP360.m3u8"],
+["晋江电视台","https://live.ijjnews.com/jjtv/sd/live.m3u8"],
+["萧山电视台","https://l.cztvcloud.com/channels/lantian/SXxiaoshan2/720p.m3u8"],
+["苏州娱乐","https://live-auth.51kandianshi.com/szgd/csztv4.m3u8"],
+["南京文旅记录","https://nklive.nbs.cn/hls/9b2005c4-046c-422f-ba45-e6adc4f4de07/index.m3u8"],
+["CGTN 纪录","https://0472.org/hls/cgtnd.m3u8?3.24.120:5140"],
 ["江西新闻","https://blind-communicate-fit-specials.trycloudflare.com/sd/24/index.m3u8"],
 ["江西都市","https://blind-communicate-fit-specials.trycloudflare.com/sd/20/index.m3u8"],
 ["江西经济生活","https://blind-communicate-fit-specials.trycloudflare.com/sd/21/index.m3u8"],
