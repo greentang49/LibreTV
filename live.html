@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>电视直播 - LibreTV</title>
+<script src="libs/hls.min.js"></script>
+<style>
+body{margin:0;background:#0b0b0f;color:#fff;font-family:sans-serif}
+header{padding:14px 18px;font-size:20px;font-weight:bold}
+header span{color:#e50914}
+.wrap{display:flex;gap:14px;padding:0 14px 14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;flex:1;align-content:start}
+button.ch{background:#1c1c22;color:#fff;border:1px solid #333;border-radius:12px;padding:16px 6px;font-size:16px;cursor:pointer}
+button.ch.active{background:#e50914;border-color:#e50914}
+.player{flex:2.2;min-width:300px}
+video{width:100%;aspect-ratio:16/9;background:#000;border-radius:12px}
+.now{padding:10px 2px;font-size:15px;color:#ccc}
+.err{color:#ff7b7b;font-size:14px;padding:6px 2px;display:none}
+.note{color:#777;font-size:13px;padding:0 18px 16px;line-height:1.6}
+@media (max-width:800px){.wrap{flex-direction:column}}
+</style>
+</head>
+<body>
+<header>LibreTV <span>电视直播</span></header>
+<div class="wrap">
+<div class="player">
+<video id="v" controls autoplay playsinline></video>
+<div class="now" id="now">点右侧频道开始看直播</div>
+<div class="err" id="err">这个频道暂时播不了，换一个试试（直播源偶尔会失效）。</div>
+</div>
+<div class="grid" id="grid"></div>
+</div>
+<div class="note">频道源为公开直播流，可能随时失效或有个别频道临时无信号；失效了告诉 Muse 换源即可。CCTV-1/5/13、湖南卫视等暂未收录：它们的公开流是 http 或带令牌的，https 网页播放器放不了。</div>
+<script>
+var CHANNELS=[
+["CCTV+ 新闻1","https://cd-live-stream.news.cctvplus.com/live/smil:CHANNEL1.smil/playlist.m3u8"],
+["CCTV+ 新闻2","https://cd-live-stream.news.cctvplus.com/live/smil:CHANNEL2.smil/playlist.m3u8"],
+["CCTV-9 纪录","https://xykt-fix.github.io/Y77.m3u8"],
+["浙江卫视","https://ali-m-l.cztv.com/channels/lantian/channel001/1080p.m3u8"],
+["广东卫视","https://h5cul1yar48um3t.wcetv.com/hls/gdsatellite.m3u8"],
+["河北卫视","https://event.pull.hebtv.com/live/live101.m3u8"],
+["东方卫视 4K","https://bp-resource-dfl.bestv.cn/148/3/video.m3u8"],
+["东方卫视 国际","https://restream.pdtvhd.com/memfs/0b1b95c9-3543-4af9-9fdb-cf45f1602f17.m3u8"],
+["青海卫视","https://hls-qhmh.lanzhousobey.cn/qhmh/mhds.m3u8"],
+["安多卫视","https://liveout.xntv.tv/a65jur/96iln2.m3u8"],
+["西藏卫视","https://pili-live-hls-zdzz-tv.zzxwcm.cn/zdzz-tv/nqzh.m3u8"],
+["广州综合","https://tencentplaybusiness.gztv.com/live/zonghes.m3u8"],
+["东莞新闻综合","https://stream.sun0769.com/dgrtv1/mp4tv1_800/index.m3u8"],
+["山东教育","https://test1.live.sdetv.com.cn/live/dianshizhibo/playlist.m3u8"],
+["浙江国际","https://ali-m-l.cztv.com/channels/lantian/channel10/1080p.m3u8"]
+];
+var v=document.getElementById('v'),hls=null,nowEl=document.getElementById('now'),errEl=document.getElementById('err');
+function play(name,url,btn){
+  document.querySelectorAll('button.ch').forEach(function(b){b.classList.remove('active')});
+  if(btn)btn.classList.add('active');
+  nowEl.textContent='正在播放：'+name; errEl.style.display='none';
+  if(hls){hls.destroy();hls=null}
+  if(v.canPlayType('application/vnd.apple.mpegurl')){v.src=url;v.play().catch(function(){});return}
+  if(Hls.isSupported()){
+    hls=new Hls({liveSyncDurationCount:3});
+    hls.loadSource(url);hls.attachMedia(v);
+    hls.on(Hls.Events.ERROR,function(e,d){if(d&&d.fatal){errEl.style.display='block'}});
+  }else{errEl.style.display='block'}
+}
+var grid=document.getElementById('grid');
+CHANNELS.forEach(function(c){
+  var b=document.createElement('button');b.className='ch';b.textContent=c[0];
+  b.onclick=function(){play(c[0],c[1],b)};grid.appendChild(b);
+});
+</script>
+</body>
+</html>
