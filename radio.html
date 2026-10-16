@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>广播电台</title>
+<style>
+body{margin:0;background:#101418;color:#e8ecf1;font-family:sans-serif;padding-bottom:110px}
+header{padding:14px 16px 4px;font-size:22px;font-weight:bold}
+.sub{padding:0 16px 8px;color:#8b95a3;font-size:13px}
+h2{font-size:16px;color:#f5c542;padding:12px 16px 4px;margin:0}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:6px 16px}
+.st{background:#1a2027;border:1px solid #2a323c;border-radius:14px;padding:16px 14px;cursor:pointer}
+.st .n{font-size:19px;font-weight:bold}
+.st .d{font-size:13px;color:#8b95a3;margin-top:4px}
+.st.cur{border-color:#1db954;background:#14251a}
+.st.cur .n{color:#1db954}
+#msg{padding:6px 16px;color:#f5c542;font-size:14px;min-height:18px}
+#player{position:fixed;left:0;right:0;bottom:0;background:#171d24;border-top:1px solid #2a323c;padding:12px 14px;display:flex;align-items:center;gap:12px}
+#pname{font-size:18px}
+#pstat{font-size:13px;color:#8b95a3}
+#play{width:62px;height:62px;border-radius:50%;border:0;background:#1db954;color:#fff;font-size:26px;margin-left:auto}
+</style>
+</head>
+<body>
+<header>广播电台</header>
+<div class="sub">点电台名字即播，直播流全部实测可用。</div>
+<div id="msg"></div>
+<h2>国家台</h2>
+<div class="grid" id="g1"></div>
+<h2>江西本地</h2>
+<div class="grid" id="g2"></div>
+<h2>热门音乐台</h2>
+<div class="grid" id="g3"></div>
+<div id="player">
+<div><div id="pname">未播放</div><div id="pstat">选一个电台</div></div>
+<button id="play">▶</button>
+</div>
+<audio id="au"></audio>
+<script src="libs/hls.min.js"></script>
+<script>
+var ST=[
+{n:'中国之声',d:'央广 CNR-1 · 新闻综合',g:1,h:1,u:'https://ngcdn002.cnr.cn/live/zgzs/index.m3u8'},
+{n:'经济之声',d:'央广 CNR-2 · 财经',g:1,h:1,u:'https://ngcdn002.cnr.cn/live/jjzs/index.m3u8'},
+{n:'音乐之声',d:'央广 CNR-3 · 音乐',g:1,h:1,u:'https://ngcdn001.cnr.cn/live/yyzs/index.m3u8'},
+{n:'文艺之声',d:'央广 CNR-9 · 文艺',g:1,h:1,u:'https://ngcdn001.cnr.cn/live/wyzs/index.m3u8'},
+{n:'环球资讯广播',d:'中国国际广播电台',g:1,h:1,u:'https://sk.cri.cn/905.m3u8'},
+{n:'江西新闻综合广播',d:'江西台 · 新闻综合',g:2,h:0,u:'https://lhttp.qtfm.cn/live/1809/64k.mp3'},
+{n:'江西交通广播',d:'江西台 · 路况交通',g:2,h:0,u:'https://lhttp.qtfm.cn/live/1811/64k.mp3'},
+{n:'江西音乐广播',d:'江西台 · 音乐',g:2,h:0,u:'https://lhttp.qtfm.cn/live/1802/64k.mp3'},
+{n:'江西财经广播',d:'江西台 · 财经',g:2,h:0,u:'https://lhttp.qtfm.cn/live/5021665/64k.mp3'},
+{n:'江西旅游广播',d:'江西台 · FM97.4 旅游',g:2,h:1,u:'https://fm-live-pull.jxtvcn.com.cn/live-jxrtv/fm974.m3u8'},
+{n:'北京音乐广播',d:'FM97.4 · 华语流行',g:3,h:0,u:'https://lhttp.qtfm.cn/live/332/64k.mp3'},
+{n:'上海动感101',d:'FM101.7 · 流行音乐',g:3,h:0,u:'https://lhttp-hw.qtfm.cn/live/274/64k.mp3'},
+{n:'广东音乐之声',d:'广东台 · 音乐',g:3,h:0,u:'https://lhttp.qtfm.cn/live/1260/64k.mp3'},
+{n:'深圳飞扬971',d:'深圳台 · FM97.1',g:3,h:0,u:'https://lhttp.qtfm.cn/live/1271/64k.mp3'}
+];
+var au=document.getElementById('au');
+var hls=null, cur=-1;
+function $(id){return document.getElementById(id);}
+function msg(t){$('msg').textContent=t||'';}
+function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;');}
+function render(){
+  var html={1:'',2:'',3:''};
+  for(var i=0;i<ST.length;i++){
+    html[ST[i].g]+='<div class="st'+(i===cur?' cur':'')+'" data-i="'+i+'"><div class="n">'+esc(ST[i].n)+'</div><div class="d">'+esc(ST[i].d)+'</div></div>';
+  }
+  $('g1').innerHTML=html[1]; $('g2').innerHTML=html[2]; $('g3').innerHTML=html[3];
+  var els=document.querySelectorAll('.st');
+  for(var j=0;j<els.length;j++){els[j].onclick=function(){play(parseInt(this.getAttribute('data-i'),10));};}
+}
+function killHls(){if(hls){try{hls.destroy();}catch(e){} hls=null;}}
+function play(i){
+  cur=i; var s=ST[i]; render();
+  $('pname').textContent=s.n; $('pstat').textContent='连接中...'; $('play').textContent='⏸';
+  msg('');
+  killHls();
+  if(s.h&&window.Hls&&Hls.isSupported()){
+    hls=new Hls();
+    hls.loadSource(s.u);
+    hls.attachMedia(au);
+    hls.on(Hls.Events.MANIFEST_PARSED,function(){au.play();});
+  }else{
+    au.src=s.u;
+    au.play();
+  }
+}
+au.addEventListener('playing',function(){$('pstat').textContent='直播中';$('play').textContent='⏸';});
+au.addEventListener('pause',function(){$('play').textContent='▶';});
+au.addEventListener('error',function(){if(cur>=0){$('pstat').textContent='连接失败';msg('这个台暂时连不上，换一个试试');}});
+$('play').onclick=function(){
+  if(!au.src&&!hls){msg('先选一个电台');return;}
+  if(au.paused){au.play();}else{au.pause();}
+};
+render();
+</script>
+</body>
+</html>
