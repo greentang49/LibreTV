@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>车机主页</title>
+<style>
+body{margin:0;background:#0d1117;color:#e8ecf1;font-family:sans-serif}
+.wrap{max-width:980px;margin:0 auto;padding:28px 20px 40px}
+h1{font-size:30px;margin:6px 0 2px}
+#clock{color:#8b95a3;font-size:17px;margin-bottom:24px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+a.tile{display:block;text-decoration:none;color:#fff;border-radius:18px;padding:26px 22px;min-height:120px}
+a.tile .ico{font-size:46px}
+a.tile .t{font-size:27px;font-weight:bold;margin-top:10px}
+a.tile .s{font-size:15px;opacity:.85;margin-top:6px;line-height:1.5}
+.tv{background:linear-gradient(135deg,#0f5fd0,#0a3f8f)}
+.mu{background:linear-gradient(135deg,#1db954,#0f7a38)}
+.mv{background:linear-gradient(135deg,#8e44ad,#5e2d80)}
+.wide{grid-column:1 / -1}
+.note{margin-top:26px;color:#5f6874;font-size:13px;line-height:1.6}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>我的车机</h1>
+<div id="clock">加载中...</div>
+<div class="grid">
+<a class="tile tv" href="/live.html"><div class="ico">📺</div><div class="t">电视直播</div><div class="s">CCTV · 各大卫视 · 江西本地台 · 翡翠台 · 凤凰</div></a>
+<a class="tile mu" href="/music.html"><div class="ico">🎵</div><div class="t">落雪音乐</div><div class="s">网易云 + QQ音乐 · 320k 高音质 / 无损 FLAC · 带歌词</div></a>
+<a class="tile mv wide" href="/"><div class="ico">🎬</div><div class="t">影视 · LibreTV</div><div class="s">电影 / 电视剧 / 动漫 / 短剧，打开后输入你的访问密码</div></a>
+</div>
+<div class="note">收藏这一个页面即可直达全部功能。视频类功能请在驻车时使用，行车中请专心驾驶。</div>
+</div>
+<script>
+function tick(){
+  var d=new Date();
+  var w=['日','一','二','三','四','五','六'][d.getDay()];
+  function p(n){return (n<10?'0':'')+n;}
+  document.getElementById('clock').textContent=(d.getMonth()+1)+'月'+d.getDate()+'日 星期'+w+' · '+p(d.getHours())+':'+p(d.getMinutes());
+}
+tick(); setInterval(tick,20000);
+</script>
+</body>
+</html>
