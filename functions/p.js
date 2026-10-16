@@ -1,4 +1,4 @@
-const ALLOW = ["qd.je", "cc.cd", "rr.kg", "indevs.in", "cloudfront.net", "miguvideo.com", "xyzfm.space"];
+const ALLOW = ["qd.je", "cc.cd", "rr.kg", "indevs.in", "cloudfront.net", "miguvideo.com", "xyzfm.space", "rycjapi.com"];
 export async function onRequest(context) {
   const url = new URL(context.request.url);
   const u = url.searchParams.get("u");
