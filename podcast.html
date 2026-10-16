@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>播客</title>
+<style>
+body{margin:0;background:#101418;color:#e8ecf1;font-family:sans-serif;padding-bottom:130px}
+header{padding:14px 16px 4px;font-size:22px;font-weight:bold}
+.sub{padding:0 16px 8px;color:#8b95a3;font-size:13px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:6px 16px}
+.sh{background:#1a2027;border:1px solid #2a323c;border-radius:14px;padding:18px 14px;cursor:pointer}
+.sh .n{font-size:20px;font-weight:bold}
+.sh .d{font-size:13px;color:#8b95a3;margin-top:4px}
+#back{display:none;margin:8px 16px;font-size:16px;padding:10px 18px;border-radius:10px;border:1px solid #2a323c;background:#1a2027;color:#fff}
+#msg{padding:4px 16px;color:#f5c542;font-size:14px;min-height:18px}
+#resume{display:none;margin:6px 16px;font-size:16px;padding:12px 16px;border-radius:10px;border:0;background:#f5c542;color:#111;width:calc(100% - 32px);text-align:left}
+.ep{padding:12px 16px;border-bottom:1px solid #1d242d;cursor:pointer}
+.ep .t{font-size:16px;line-height:1.45}
+.ep .a{font-size:12px;color:#8b95a3;margin-top:3px}
+.ep.cur .t{color:#1db954}
+#player{position:fixed;left:0;right:0;bottom:0;background:#171d24;border-top:1px solid #2a323c;padding:10px 14px}
+#player .row{display:flex;align-items:center;gap:10px}
+#ptitle{font-size:15px;line-height:1.35;flex:1}
+.ctl button{width:54px;height:54px;border-radius:50%;border:0;background:#232b34;color:#fff;font-size:19px}
+.ctl button.main{background:#1db954;font-size:24px;width:62px;height:62px}
+#prog{width:100%;margin-top:8px;height:26px}
+#ptime{font-size:12px;color:#8b95a3;margin-top:2px}
+</style>
+</head>
+<body>
+<header>播客</header>
+<div class="sub">点节目看最近 30 期，点单集即播；进度自动记住，下次可续听。</div>
+<button id="resume"></button>
+<button id="back">← 返回节目列表</button>
+<div id="msg"></div>
+<div class="grid" id="shows"></div>
+<div id="list"></div>
+<div id="player">
+<div class="row ctl">
+<button id="b30">-30s</button>
+<button id="play" class="main">▶</button>
+<button id="f30">+30s</button>
+<div id="ptitle">未播放</div>
+</div>
+<input id="prog" type="range" min="0" max="1000" value="0">
+<div id="ptime"></div>
+</div>
+<audio id="au"></audio>
+<script>
+var SHOWS=[
+{n:'故事FM',d:'真实故事 · 每周更新',f:'https://feeds.storyfm.cn/storyfm.xml',p:0},
+{n:'日谈公园',d:'文化杂谈 · 李叔/李志明',f:'https://www.ximalaya.com/album/5574153.xml',p:0},
+{n:'忽左忽右',d:'文化沙龙 · 程衍樑',f:'https://feed.xyzfm.space/cv4bkgpuglwp',p:1},
+{n:'随机波动',d:'女性视角 · 文化评论',f:'https://feeds.fireside.fm/stovol/rss',p:0},
+{n:'文化有限',d:'读书节目 · 大壹/星光',f:'https://s1.proxy.wavpub.com/weknownothing.xml',p:0},
+{n:'声动早咖啡',d:'商业科技 · 每日更新',f:'https://www.ximalaya.com/album/51076156.xml',p:0},
+{n:'商业就是这样',d:'商业解读 · 第一财经',f:'https://www.ximalaya.com/album/46587439.xml',p:0},
+{n:'无聊斋',d:'闲聊访谈 · 六兽',f:'https://feed.xyzfm.space/njwyhpcjqn9t',p:1},
+{n:'津津乐道',d:'生活方式 · 津津',f:'https://feeds.daopub.com/all.xml',p:0},
+{n:'黑水公园',d:'科幻奇幻 · 泛科幻',f:'https://www.ximalaya.com/album/3558668.xml',p:0}
+];
+var au=document.getElementById('au');
+var eps=[], curEp=null, lastSave=0;
+function $(id){return document.getElementById(id);}
+function msg(t){$('msg').textContent=t||'';}
+function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;');}
+function fmt(s){s=Math.floor(s||0);var h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60;function p(n){return (n<10?'0':'')+n;}return (h>0?(h+':'+p(m)):m)+':'+p(x);}
+function renderShows(){
+  var h='';
+  for(var i=0;i<SHOWS.length;i++){h+='<div class="sh" data-i="'+i+'"><div class="n">'+esc(SHOWS[i].n)+'</div><div class="d">'+esc(SHOWS[i].d)+'</div></div>';}
+  $('shows').innerHTML=h;
+  var els=document.querySelectorAll('.sh');
+  for(var j=0;j<els.length;j++){els[j].onclick=function(){openShow(parseInt(this.getAttribute('data-i'),10));};}
+}
+function feedUrl(sh){return sh.p?('/p?u='+encodeURIComponent(sh.f)):sh.f;}
+function openShow(i){
+  var sh=SHOWS[i];
+  msg('加载《'+sh.n+'》节目单...');
+  fetch(feedUrl(sh)).then(function(r){return r.text();}).then(function(txt){
+    var doc=new DOMParser().parseFromString(txt,'text/xml');
+    var items=doc.getElementsByTagName('item');
+    eps=[];
+    var n=Math.min(items.length,30);
+    for(var k=0;k<n;k++){
+      var it=items[k];
+      var enc=it.getElementsByTagName('enclosure')[0];
+      if(!enc)continue;
+      var durEl=it.getElementsByTagName('itunes:duration')[0];
+      eps.push({
+        show:sh.n,
+        title:(it.getElementsByTagName('title')[0]||{}).textContent||'',
+        date:(it.getElementsByTagName('pubDate')[0]||{}).textContent||'',
+        dur:durEl?durEl.textContent:'',
+        url:enc.getAttribute('url')
+      });
+    }
+    $('shows').style.display='none';
+    $('back').style.display='block';
+    renderEps();
+    msg('《'+sh.n+'》最近 '+eps.length+' 期，点一集播放');
+  }).catch(function(){msg('节目单加载失败，网络或源异常');});
+}
+function renderEps(){
+  var h='';
+  for(var i=0;i<eps.length;i++){
+    var e=eps[i];
+    var d=e.date?new Date(e.date):null;
+    var ds=d?((d.getMonth()+1)+'月'+d.getDate()+'日'):'';
+    h+='<div class="ep'+(curEp===e?' cur':'')+'" data-i="'+i+'"><div class="t">'+esc(e.title)+'</div><div class="a">'+ds+(e.dur?(' · 时长 '+esc(e.dur)):'')+'</div></div>';
+  }
+  $('list').innerHTML=h||'<div style="padding:16px;color:#8b95a3">这一节目暂时没有可播的集数</div>';
+  var els=document.querySelectorAll('.ep');
+  for(var j=0;j<els.length;j++){els[j].onclick=function(){playEp(eps[parseInt(this.getAttribute('data-i'),10)]);};}
+}
+$('back').onclick=function(){
+  $('shows').style.display='grid';
+  $('back').style.display='none';
+  $('list').innerHTML='';
+  msg('');
+};
+function playEp(e){
+  curEp=e;
+  au.src=e.url;
+  $('ptitle').textContent=e.show+' · '+e.title;
+  $('play').textContent='⏸';
+  msg('');
+  var saved=0;
+  try{saved=parseInt(localStorage.getItem('podpos_'+e.url)||'0',10);}catch(x){}
+  au.play().then(function(){
+    if(saved>10&&au.duration&&saved<au.duration-10){au.currentTime=saved;msg('已从上次进度续听');}
+  }).catch(function(){});
+  try{localStorage.setItem('podlast',JSON.stringify({show:e.show,title:e.title,url:e.url}));}catch(x){}
+  renderEps();
+}
+$('play').onclick=function(){if(au.src){if(au.paused){au.play();$('play').textContent='⏸';}else{au.pause();$('play').textContent='▶';}}};
+$('b30').onclick=function(){if(au.src)au.currentTime=Math.max(0,au.currentTime-30);};
+$('f30').onclick=function(){if(au.src)au.currentTime=Math.min(au.duration||1e9,au.currentTime+30);};
+au.addEventListener('timeupdate',function(){
+  if(au.duration){$('prog').value=Math.floor(au.currentTime/au.duration*1000);$('ptime').textContent=fmt(au.currentTime)+' / '+fmt(au.duration);}
+  var now=Date.now();
+  if(curEp&&now-lastSave>5000){lastSave=now;try{localStorage.setItem('podpos_'+curEp.url,''+Math.floor(au.currentTime));}catch(x){}}
+});
+au.addEventListener('pause',function(){$('play').textContent='▶';if(curEp){try{localStorage.setItem('podpos_'+curEp.url,''+Math.floor(au.currentTime));}catch(x){}}});
+au.addEventListener('error',function(){if(curEp)msg('这一集播放失败，换一集试试');});
+$('prog').addEventListener('input',function(){if(au.duration)au.currentTime=au.duration*this.value/1000;});
+function initResume(){
+  try{
+    var s=localStorage.getItem('podlast');
+    if(!s)return;
+    var e=JSON.parse(s);
+    var pos=parseInt(localStorage.getItem('podpos_'+e.url)||'0',10);
+    if(pos>10){
+      var b=$('resume');
+      b.style.display='block';
+      b.textContent='▶ 继续收听：'+e.show+' · '+e.title+'（听到 '+fmt(pos)+'）';
+      b.onclick=function(){playEp(e);};
+    }
+  }catch(x){}
+}
+renderShows();
+initResume();
+</script>
+</body>
+</html>
