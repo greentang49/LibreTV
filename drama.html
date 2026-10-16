@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>短剧</title>
+<style>
+body{margin:0;background:#101418;color:#e8ecf1;font-family:sans-serif}
+header{padding:14px 16px 4px;font-size:22px;font-weight:bold}
+.sub{padding:0 16px 8px;color:#8b95a3;font-size:13px}
+.bar{display:flex;gap:8px;padding:6px 16px}
+.bar input{flex:1;font-size:18px;padding:12px;border-radius:10px;border:1px solid #2a323c;background:#1a2027;color:#fff}
+.bar button{font-size:18px;padding:12px 20px;border-radius:10px;border:0;background:#e91e63;color:#fff}
+#msg{padding:4px 16px;color:#f5c542;font-size:14px;min-height:18px}
+#resume{display:none;margin:6px 16px;font-size:16px;padding:12px 16px;border-radius:10px;border:0;background:#f5c542;color:#111;width:calc(100% - 32px);text-align:left}
+.grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;padding:8px 16px}
+.card{cursor:pointer}
+.card img{width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:10px;background:#222}
+.card .n{font-size:15px;margin-top:6px;line-height:1.35}
+.card .r{font-size:12px;color:#f5c542;margin-top:2px}
+.pager{display:flex;gap:10px;padding:14px 16px;align-items:center}
+.pager button{font-size:16px;padding:10px 18px;border-radius:10px;border:1px solid #2a323c;background:#1a2027;color:#fff}
+#detail{display:none}
+#back{margin:8px 16px;font-size:16px;padding:10px 18px;border-radius:10px;border:1px solid #2a323c;background:#1a2027;color:#fff}
+#vwrap{position:sticky;top:0;background:#000;z-index:5}
+video{width:100%;max-height:72vh;background:#000;display:block}
+.dinfo{padding:10px 16px}
+.dinfo .n{font-size:21px;font-weight:bold}
+.dinfo .i{font-size:13px;color:#8b95a3;line-height:1.6;margin-top:6px}
+#nowp{padding:6px 16px;color:#1db954;font-size:15px}
+.eps{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;padding:8px 16px 30px}
+.eps button{font-size:15px;padding:12px 4px;border-radius:10px;border:1px solid #2a323c;background:#1a2027;color:#dfe6ee}
+.eps button.cur{background:#e91e63;border-color:#e91e63;color:#fff}
+.vctl{display:flex;gap:10px;padding:8px 16px}
+.vctl button{flex:1;font-size:17px;padding:12px;border-radius:10px;border:1px solid #2a323c;background:#232b34;color:#fff}
+</style>
+</head>
+<body>
+<header>短剧</header>
+<div class="sub">如意源短剧库，点封面选集，播完自动下一集。</div>
+<div class="bar"><input id="q" placeholder="搜短剧名"><button id="go">搜索</button></div>
+<button id="resume"></button>
+<div id="msg"></div>
+<div id="home">
+<div class="grid" id="cards"></div>
+<div class="pager"><button id="pv">上一页</button><span id="pginfo"></span><button id="nx">下一页</button></div>
+</div>
+<div id="detail">
+<button id="back">← 返回列表</button>
+<div id="vwrap"><video id="vd" controls playsinline></video></div>
+<div id="nowp"></div>
+<div class="vctl"><button id="pepv">上一集</button><button id="nepv">下一集</button></div>
+<div class="dinfo"><div class="n" id="dname"></div><div class="i" id="dinfo"></div></div>
+<div class="eps" id="eps"></div>
+</div>
+<script src="libs/hls.min.js"></script>
+<script>
+var API='https://cj.rycjapi.com/api.php/provide/vod';
+var page=1, pagecount=1, mode='list', kw='';
+var drama=null, eps=[], curEp=-1, hls=null;
+var vd=document.getElementById('vd');
+function $(id){return document.getElementById(id);}
+function msg(t){$('msg').textContent=t||'';}
+function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function https(u){return u?u.replace(/^http:\/\//,'https://'):u;}
+function api(params){
+  return fetch('/p?u='+encodeURIComponent(API+'?'+params)).then(function(r){return r.json();});
+}
+function renderCards(list){
+  var h='';
+  for(var i=0;i<list.length;i++){
+    var v=list[i];
+    h+='<div class="card" data-id="'+v.vod_id+'"><img src="'+esc(https(v.vod_pic||''))+'"><div class="n">'+esc(v.vod_name)+'</div><div class="r">'+esc(v.vod_remarks||'')+'</div></div>';
+  }
+  $('cards').innerHTML=h||'<div style="color:#8b95a3">没有内容</div>';
+  var els=document.querySelectorAll('.card');
+  for(var j=0;j<els.length;j++){els[j].onclick=function(){openDrama(this.getAttribute('data-id'),-1);};}
+  $('pginfo').textContent='第 '+page+' / '+pagecount+' 页';
+}
+function loadList(){
+  msg('加载中...');
+  var params='ac=list&t=46&pg='+page;
+  if(mode==='search'){params='ac=list&wd='+encodeURIComponent(kw)+'&pg='+page;}
+  api(params).then(function(j){
+    var list=j.list||[];
+    if(mode==='search'){var f=[];for(var i=0;i<list.length;i++){if(list[i].type_id==46)f.push(list[i]);} list=f;}
+    pagecount=j.pagecount||1;
+    renderCards(list);
+    msg(list.length?('共 '+list.length+' 部'):'没找到，换个名字试试');
+  }).catch(function(){msg('加载失败，网络或源异常');});
+}
+$('go').onclick=function(){
+  kw=$('q').value.replace(/^\s+|\s+$/g,'');
+  if(!kw){mode='list';}else{mode='search';}
+  page=1; loadList();
+};
+$('q').addEventListener('keydown',function(e){if(e.keyCode===13)$('go').onclick();});
+$('pv').onclick=function(){if(page>1){page--;loadList();window.scrollTo(0,0);}};
+$('nx').onclick=function(){if(page<pagecount){page++;loadList();window.scrollTo(0,0);}};
+function stripHtml(s){return (s||'').replace(/<[^>]*>/g,'').replace(/&nbsp;/g,' ');}
+function openDrama(id,startEp){
+  msg('加载剧集...');
+  api('ac=detail&ids='+id).then(function(j){
+    var v=(j.list||[])[0];
+    if(!v){msg('这部剧取不到详情');return;}
+    drama=v; eps=[]; curEp=-1;
+    var sources=(v.vod_play_url||'').split('$$$');
+    var best=null;
+    for(var s=0;s<sources.length;s++){
+      var parts=sources[s].split('#');
+      var arr=[];
+      for(var k=0;k<parts.length;k++){
+        var ix=parts[k].indexOf('$');
+        if(ix>0){arr.push({name:parts[k].substring(0,ix),url:parts[k].substring(ix+1)});}
+      }
+      if(arr.length&&arr[0].url.indexOf('.m3u8')>=0){best=arr;break;}
+      if(!best&&arr.length)best=arr;
+    }
+    eps=best||[];
+    $('home').style.display='none';
+    $('detail').style.display='block';
+    $('dname').textContent=v.vod_name;
+    $('dinfo').textContent=(v.vod_remarks||'')+' · 共 '+eps.length+' 集' + (v.vod_blurb?(' · '+stripHtml(v.vod_blurb)):'');
+    renderEps();
+    msg('');
+    window.scrollTo(0,0);
+    if(eps.length){playEp(startEp>=0?startEp:0);}
+  }).catch(function(){msg('详情加载失败');});
+}
+function renderEps(){
+  var h='';
+  for(var i=0;i<eps.length;i++){h+='<button data-i="'+i+'"'+(i===curEp?' class="cur"':'')+'>'+esc(eps[i].name)+'</button>';}
+  $('eps').innerHTML=h;
+  var els=$('eps').querySelectorAll('button');
+  for(var j=0;j<els.length;j++){els[j].onclick=function(){playEp(parseInt(this.getAttribute('data-i'),10));};}
+}
+function killHls(){if(hls){try{hls.destroy();}catch(e){} hls=null;}}
+function playEp(i){
+  if(i<0||i>=eps.length)return;
+  curEp=i; var e=eps[i];
+  renderEps();
+  $('nowp').textContent='正在播放：'+drama.vod_name+' · '+e.name;
+  killHls();
+  if(window.Hls&&Hls.isSupported()){
+    hls=new Hls();
+    hls.loadSource(e.url);
+    hls.attachMedia(vd);
+    hls.on(Hls.Events.MANIFEST_PARSED,function(){vd.play();});
+  }else{
+    vd.src=e.url; vd.play();
+  }
+  try{localStorage.setItem('drama_last',JSON.stringify({id:drama.vod_id,name:drama.vod_name,ep:i,epname:e.name}));}catch(x){}
+  window.scrollTo(0,0);
+}
+$('pepv').onclick=function(){playEp(curEp-1);};
+$('nepv').onclick=function(){playEp(curEp+1);};
+vd.addEventListener('ended',function(){if(curEp+1<eps.length)playEp(curEp+1);});
+vd.addEventListener('error',function(){if(curEp>=0)msg('这一集播放失败，试试下一集');});
+$('back').onclick=function(){
+  killHls(); vd.removeAttribute('src'); vd.load();
+  $('detail').style.display='none';
+  $('home').style.display='block';
+  msg('');
+};
+function initResume(){
+  try{
+    var s=localStorage.getItem('drama_last');
+    if(!s)return;
+    var d=JSON.parse(s);
+    var b=$('resume');
+    b.style.display='block';
+    b.textContent='▶ 继续观看：'+d.name+' · '+d.epname;
+    b.onclick=function(){openDrama(d.id,d.ep);};
+  }catch(x){}
+}
+initResume();
+loadList();
+</script>
+</body>
+</html>
