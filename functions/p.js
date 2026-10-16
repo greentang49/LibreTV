@@ -12,22 +12,28 @@ export async function onRequest(context) {
   const ct = resp.headers.get("content-type") || "";
   const headers = new Headers(resp.headers);
   headers.set("Access-Control-Allow-Origin", "*");
-  const isM3u = ct.includes("mpegurl") || target.pathname.endsWith(".m3u8");
-  if (isM3u) {
-    let text = await resp.text();
-    const finalUrl = resp.url ? new URL(resp.url) : target;
-    const wrap = function(abs) { return url.origin + "/p?u=" + encodeURIComponent(abs); };
-    text = text.split("\n").map(function(line) {
-      const t = line.trim();
-      if (!t) return line;
-      if (t.charAt(0) === "#") {
-        return line.replace(/URI="([^"]+)"/g, function(m, x) {
-          try { return "URI=\"" + wrap(new URL(x, finalUrl).toString()) + "\""; } catch (e) { return m; }
-        });
-      }
-      try { return wrap(new URL(t, finalUrl).toString()); } catch (e) { return line; }
-    }).join("\n");
-    return new Response(text, { status: resp.status, headers: headers });
+  const maybePlaylist = ct.includes("mpegurl") || ct.includes("text") || target.pathname.endsWith(".m3u8");
+  if (maybePlaylist) {
+    const buf = await resp.arrayBuffer();
+    const head = new TextDecoder("utf-8", { fatal: false }).decode(buf.slice(0, 64)).trimStart();
+    if (head.startsWith("#EXTM3U")) {
+      const text = new TextDecoder("utf-8").decode(buf);
+      const finalUrl = resp.url ? new URL(resp.url) : target;
+      const wrap = function(abs) { return url.origin + "/p?u=" + encodeURIComponent(abs); };
+      const out = text.split("\n").map(function(line) {
+        const t = line.trim();
+        if (!t) return line;
+        if (t.charAt(0) === "#") {
+          return line.replace(/URI="([^"]+)"/g, function(m, x) {
+            try { return "URI=\"" + wrap(new URL(x, finalUrl).toString()) + "\""; } catch (e) { return m; }
+          });
+        }
+        try { return wrap(new URL(t, finalUrl).toString()); } catch (e) { return line; }
+      }).join("\n");
+      headers.set("Content-Type", "application/vnd.apple.mpegurl");
+      return new Response(out, { status: resp.status, headers: headers });
+    }
+    return new Response(buf, { status: resp.status, headers: headers });
   }
   return new Response(resp.body, { status: resp.status, headers: headers });
 }
