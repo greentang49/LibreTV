@@ -10,6 +10,7 @@ body{margin:0;background:#0e0e12;color:#eee;font-family:sans-serif}
 #home{padding:18px 16px 26px}
 #clock{font-size:40px;font-weight:700;letter-spacing:1px}
 #date{font-size:15px;color:#9aa;margin:4px 0 16px}
+#brand{font-size:32px;font-weight:900;letter-spacing:3px;margin:2px 0 8px;background:linear-gradient(90deg,#ff5f6d,#ffc371,#4ade80,#38bdf8,#c084fc);-webkit-background-clip:text;background-clip:text;color:transparent}
 .grid{display:flex;flex-wrap:wrap;gap:12px}
 a.tile{display:block;flex:1 1 30%;min-width:150px;background:#1b1b23;border:1px solid #2c2c38;border-radius:14px;padding:20px 8px 16px;text-align:center;text-decoration:none;color:#eee}
 a.tile .ico{font-size:36px}
@@ -32,6 +33,7 @@ a.tile.wide{flex:1 1 100%}
 </head>
 <body>
 <div id="home">
+  <div id="brand">PP 的小酷站</div>
   <div id="clock">--:--</div>
   <div id="date"></div>
   <button id="chip2" onclick="stopBg()" style="display:none;margin:0 0 14px;padding:8px 14px;font-size:14px;border:0;border-radius:8px;background:#54431a;color:#ffd76a">🎵 后台播放中 · 点此停</button>
