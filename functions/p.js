@@ -1,4 +1,4 @@
-const ALLOW = ["qd.je", "cc.cd", "rr.kg", "indevs.in", "cloudfront.net", "miguvideo.com", "xyzfm.space", "rycjapi.com", "101.35.240.114", "fengshows.cn"];
+const ALLOW = ["qd.je", "cc.cd", "rr.kg", "indevs.in", "cloudfront.net", "miguvideo.com", "xyzfm.space", "rycjapi.com", "101.35.240.114", "fengshows.cn", "chining.eu.org"];
 export async function onRequest(context) {
   const url = new URL(context.request.url);
   const u = url.searchParams.get("u");
@@ -8,7 +8,13 @@ export async function onRequest(context) {
   const host = target.hostname;
   const ok = ALLOW.some(function(s) { return host === s || host.endsWith("." + s); });
   if (!ok) return new Response("host not allowed", { status: 403 });
-  const resp = await fetch(target.toString(), { headers: { "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15" } });
+  const UA = { "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15" };
+  if (url.searchParams.get("mode") === "url") {
+    const r0 = await fetch(target.toString(), { headers: UA, redirect: "manual" });
+    const loc = r0.headers.get("location") || "";
+    return new Response(loc, { status: loc ? 200 : 502, headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "text/plain" } });
+  }
+  const resp = await fetch(target.toString(), { headers: UA });
   const ct = resp.headers.get("content-type") || "";
   const headers = new Headers(resp.headers);
   headers.set("Access-Control-Allow-Origin", "*");
