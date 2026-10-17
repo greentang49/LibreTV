@@ -1,52 +1,135 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>车机主页</title>
 <style>
-body{margin:0;background:#0d1117;color:#e8ecf1;font-family:sans-serif}
-.wrap{max-width:980px;margin:0 auto;padding:28px 20px 40px}
-h1{font-size:30px;margin:6px 0 2px}
-#clock{color:#8b95a3;font-size:17px;margin-bottom:24px}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-a.tile{display:block;text-decoration:none;color:#fff;border-radius:18px;padding:26px 22px;min-height:120px}
-a.tile .ico{font-size:46px}
-a.tile .t{font-size:27px;font-weight:bold;margin-top:10px}
-a.tile .s{font-size:15px;opacity:.85;margin-top:6px;line-height:1.5}
-.tv{background:linear-gradient(135deg,#0f5fd0,#0a3f8f)}
-.mu{background:linear-gradient(135deg,#1db954,#0f7a38)}
-.rd{background:linear-gradient(135deg,#e67e22,#a34d0d)}
-.pc{background:linear-gradient(135deg,#16a085,#0b6350)}
-.mv{background:linear-gradient(135deg,#8e44ad,#5e2d80)}
-.dr{background:linear-gradient(135deg,#e91e63,#8e1040)}
-.wide{grid-column:1 / -1}
-.note{margin-top:26px;color:#5f6874;font-size:13px;line-height:1.6}
+*{box-sizing:border-box}
+body{margin:0;background:#0e0e12;color:#eee;font-family:sans-serif}
+#home{padding:18px 16px 26px}
+#clock{font-size:40px;font-weight:700;letter-spacing:1px}
+#date{font-size:15px;color:#9aa;margin:4px 0 16px}
+.grid{display:flex;flex-wrap:wrap;gap:12px}
+a.tile{display:block;flex:1 1 30%;min-width:150px;background:#1b1b23;border:1px solid #2c2c38;border-radius:14px;padding:20px 8px 16px;text-align:center;text-decoration:none;color:#eee}
+a.tile .ico{font-size:36px}
+a.tile .t{font-size:18px;margin-top:8px}
+a.tile .s{font-size:12px;color:#8a8a96;margin-top:3px}
+a.tile:active{background:#2e4a38}
+a.tile.wide{flex:1 1 100%}
+#bar{display:none;height:48px;background:#17171f;border-bottom:1px solid #2c2c38;align-items:center;padding:0 10px;gap:10px}
+#bar.on{display:flex}
+#back{padding:9px 14px;font-size:15px;border:0;border-radius:8px;background:#2a2a35;color:#eee}
+#ttl{font-size:16px;font-weight:700}
+#chip{display:none;margin-left:auto;padding:7px 12px;font-size:13px;border:0;border-radius:8px;background:#54431a;color:#ffd76a}
+#chip.on{display:block}
+#stage{display:none;position:relative;height:calc(100vh - 48px)}
+#stage.on{display:block}
+#stage iframe{width:100%;height:100%;border:0;display:none;background:#000}
+#stage iframe.on{display:block}
+#load{position:absolute;left:0;right:0;top:38%;text-align:center;font-size:17px;color:#9cf;display:none}
 </style>
 </head>
 <body>
-<div class="wrap">
-<h1>我的车机</h1>
-<div id="clock">加载中...</div>
-<div class="grid">
-<a class="tile tv" href="/live.html"><div class="ico">📺</div><div class="t">电视直播</div><div class="s">CCTV · 各大卫视 · 江西本地台 · 翡翠台 · 凤凰</div></a>
-<a class="tile tv" href="http://t.chining.eu.org/testuc.html"><div class="ico">📡</div><div class="t">联通源测试</div><div class="s"></div></a>
-<a class="tile mu" href="/music.html"><div class="ico">🎵</div><div class="t">落雪音乐</div><div class="s">网易云 + QQ音乐 · 320k 高音质 / 无损 FLAC · 带歌词</div></a>
-<a class="tile rd" href="/radio.html"><div class="ico">📻</div><div class="t">广播电台</div><div class="s">央广 · 江西本地台 · 热门音乐台，共 14 个</div></a>
-<a class="tile pc" href="/podcast.html"><div class="ico">🎙</div><div class="t">播客</div><div class="s">故事FM · 日谈公园 · 忽左忽右等 10 个节目，可续听</div></a>
-<a class="tile dr wide" href="/drama.html"><div class="ico">🎞</div><div class="t">短剧</div><div class="s">一万四千多部短剧 · 选集连播 · 自动下一集</div></a>
-<a class="tile mv wide" href="/"><div class="ico">🎬</div><div class="t">影视 · LibreTV</div><div class="s">电影 / 电视剧 / 动漫 / 短剧，打开后输入你的访问密码</div></a>
+<div id="home">
+  <div id="clock">--:--</div>
+  <div id="date"></div>
+  <button id="chip2" onclick="stopBg()" style="display:none;margin:0 0 14px;padding:8px 14px;font-size:14px;border:0;border-radius:8px;background:#54431a;color:#ffd76a">🎵 后台播放中 · 点此停</button>
+  <div class="grid">
+    <a class="tile" href="javascript:void(0)" onclick="go('tv')"><div class="ico">📺</div><div class="t">电视直播</div><div class="s">央视 · 卫视 · 港台</div></a>
+    <a class="tile" href="http://t.chining.eu.org/testuc.html"><div class="ico">📡</div><div class="t">联通源测试</div><div class="s">临时测试页</div></a>
+    <a class="tile" href="javascript:void(0)" onclick="go('music')"><div class="ico">🎵</div><div class="t">落雪音乐</div><div class="s">320k · FLAC</div></a>
+    <a class="tile" href="javascript:void(0)" onclick="go('radio')"><div class="ico">📻</div><div class="t">广播电台</div><div class="s">国家台 · 江西台</div></a>
+    <a class="tile" href="javascript:void(0)" onclick="go('podcast')"><div class="ico">🎙</div><div class="t">播客</div><div class="s">十档节目</div></a>
+    <a class="tile" href="javascript:void(0)" onclick="go('drama')"><div class="ico">🎞</div><div class="t">短剧</div><div class="s">如意短剧库</div></a>
+    <a class="tile wide" href="javascript:void(0)" onclick="go('libre')"><div class="ico">🎬</div><div class="t">影视 · LibreTV</div><div class="s">电影 · 电视剧 · 动漫</div></a>
+  </div>
 </div>
-<div class="note">收藏这一个页面即可直达全部功能。视频类功能请在驻车时使用，行车中请专心驾驶。</div>
+<div id="bar">
+  <button id="back" onclick="home()">← 主页</button>
+  <div id="ttl"></div>
+  <button id="chip" onclick="stopBg()">🎵 后台播放中 · 点此停</button>
 </div>
+<div id="stage"><div id="load">加载中…</div></div>
 <script>
+var SEC={
+  tv:{t:'📺 电视直播',u:'/live.html',video:1},
+  music:{t:'🎵 落雪音乐',u:'/music.html',video:0},
+  radio:{t:'📻 广播电台',u:'/radio.html',video:0},
+  podcast:{t:'🎙 播客',u:'/podcast.html',video:0},
+  drama:{t:'🎞 短剧',u:'/drama.html',video:1},
+  libre:{t:'🎬 影视 · LibreTV',u:'/',video:1}
+};
+var frames={},cur=null,bgAudio=null;
 function tick(){
-  var d=new Date();
-  var w=['日','一','二','三','四','五','六'][d.getDay()];
-  function p(n){return (n<10?'0':'')+n;}
-  document.getElementById('clock').textContent=(d.getMonth()+1)+'月'+d.getDate()+'日 星期'+w+' · '+p(d.getHours())+':'+p(d.getMinutes());
+  var d=new Date(),p=function(n){return (n<10?'0':'')+n};
+  var w='日一二三四五六'.charAt(d.getDay());
+  document.getElementById('clock').textContent=p(d.getHours())+':'+p(d.getMinutes());
+  document.getElementById('date').textContent=(d.getMonth()+1)+'月'+d.getDate()+'日 星期'+w;
 }
-tick(); setInterval(tick,20000);
+tick();setInterval(tick,20000);
+function mediaIn(f){
+  try{return f.contentWindow.document.querySelectorAll('audio,video')}catch(e){return []}
+}
+function pauseIn(f){
+  var m=mediaIn(f);
+  for(var i=0;i<m.length;i++){try{m[i].pause()}catch(e){}}
+}
+function playingAudioIn(f){
+  var m=mediaIn(f);
+  for(var i=0;i<m.length;i++){if(m[i].tagName==='AUDIO'&&!m[i].paused)return true}
+  return false;
+}
+function go(id){
+  var s=SEC[id];
+  if(cur&&cur!==id){
+    if(SEC[cur].video){pauseIn(frames[cur])}
+    else if(!s.video){pauseIn(frames[cur]);bgAudio=null}
+  }
+  document.getElementById('home').style.display='none';
+  document.getElementById('bar').className='on';
+  document.getElementById('stage').className='on';
+  document.getElementById('ttl').textContent=s.t;
+  var f=frames[id];
+  if(!f){
+    f=document.createElement('iframe');
+    f.setAttribute('allowfullscreen','');
+    f.setAttribute('allow','autoplay; fullscreen');
+    document.getElementById('load').style.display='block';
+    f.onload=function(){document.getElementById('load').style.display='none'};
+    f.src=s.u;
+    document.getElementById('stage').appendChild(f);
+    frames[id]=f;
+  }
+  for(var k in frames){frames[k].className=(k===id?'on':'')}
+  cur=id;
+  refreshChip();
+}
+function home(){
+  if(cur&&SEC[cur].video){pauseIn(frames[cur])}
+  document.getElementById('stage').className='';
+  document.getElementById('bar').className='';
+  document.getElementById('home').style.display='block';
+  cur=null;
+  refreshChip();
+}
+function refreshChip(){
+  bgAudio=null;
+  for(var k in frames){
+    if(k!==cur&&playingAudioIn(frames[k])){bgAudio=k;break}
+  }
+  document.getElementById('chip').className=bgAudio?'on':'';
+  document.getElementById('chip2').style.display=bgAudio?'block':'none';
+}
+function stopBg(){
+  if(bgAudio){pauseIn(frames[bgAudio]);bgAudio=null}
+  document.getElementById('chip').className='';
+  document.getElementById('chip2').style.display='none';
+}
+setInterval(refreshChip,3000);
+window.addEventListener('load',function(){
+  setTimeout(function(){ if(!frames.tv){ go('tv'); home(); } },4000);
+});
 </script>
 </body>
 </html>
