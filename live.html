@@ -143,9 +143,9 @@ var CHANNELS=[
 ["金鹰纪实","https://phoneal.qing.mgtv.com/nn_live/nn_x64/Y2RuZXhfaWQ9YWxfaGxzX2xkdnQmZT02OTE0NjA0JnY9MSZpZD1ITldTWkdTVCZzPTcwN2RiYTc2YzJjNmJmMTQ4MmUyZGYzOWU2NWM3YWFi/JYJSMPP360.m3u8"],
 ["金鹰卡通","https://phoneal.qing.mgtv.com/nn_live/nn_x64/Y2RuZXhfaWQ9YWxfaGxzX2xkdnQmZT02OTE0NjA0JnY9MSZpZD1ITldTWkdTVCZzPTcwN2RiYTc2YzJjNmJmMTQ4MmUyZGYzOWU2NWM3YWFi/JYKTMPP360.m3u8"],
 ["长沙新闻","https://phoneal.qing.mgtv.com/nn_live/nn_x64/Y2RuZXhfaWQ9YWxfaGxzX2xkdnQmZT02OTE0NjA0JnY9MSZpZD1ITldTWkdTVCZzPTcwN2RiYTc2YzJjNmJmMTQ4MmUyZGYzOWU2NWM3YWFi/CSXWMPP360.m3u8"],
-["快乐垂钓","https://phoneal.qing.mgtv.com/nn_live/nn_x64/Y2RuZXhfaWQ9YWxfaGxzX2xkdnQmZT02OTE0NjA0JnY9MSZpZD1ITldTWkdTVCZzPTcwN2RiYTc2YzJjNmJmMTQ4MmUyZGYzOWU2NWM3YWFi/KLCDMPP360.m3u8"],
 ["苏州4K","https://live-auth.51kandianshi.com/szgd/csztv4k_hd.m3u8"],
 ["河北4K","https://event.pull.hebtv.com:443/live/live101.m3u8"],
+["快乐垂钓","https://phoneal.qing.mgtv.com/nn_live/nn_x64/Y2RuZXhfaWQ9YWxfaGxzX2xkdnQmZT02OTE0NjA0JnY9MSZpZD1ITldTWkdTVCZzPTcwN2RiYTc2YzJjNmJmMTQ4MmUyZGYzOWU2NWM3YWFi/KLCDMPP360.m3u8"],
 ["晋江电视台","https://live.ijjnews.com/jjtv/sd/live.m3u8"],
 ["萧山电视台","https://l.cztvcloud.com/channels/lantian/SXxiaoshan2/720p.m3u8"],
 ["苏州娱乐","https://live-auth.51kandianshi.com/szgd/csztv4.m3u8"],
@@ -187,7 +187,7 @@ function playFlv(id,alt){
 function play(name,url,btn,alt){
   document.querySelectorAll('button.ch').forEach(function(b){b.classList.remove('active')});
   if(btn)btn.classList.add('active');
-  nowEl.textContent='正在播放：'+name;errEl.style.display='none';
+  nowEl.textContent='正在播放：'+name; errEl.style.display='none';
   if(hls){hls.destroy();hls=null}
   killFlv();
   if(url.indexOf('api:')===0){
