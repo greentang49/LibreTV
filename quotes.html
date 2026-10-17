@@ -34,7 +34,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
   <div class="card" id="c-icbc"><div class="nm">工行积存金（元/克 · 参考）</div><div class="pr">--</div><div class="ch">--</div><div class="sub">锚定上金所黄金延期，实际成交以工行 App 报价为准</div></div>
 </div>
 <button id="btn" onclick="loadAll()">立即刷新</button>
-<div id="note">数据来源：伦敦金、纳指期货、上海金来自新浪财经公开行情；数字货币来自 OKX 公开行情。每 15 秒自动刷新。积存金两行是参考价：两家银行的积存金都锚定上海黄金交易所价格加减点差，没有公开实时接口，这里显示锚定价，买卖请以银行 App 当时报价为准。</div>
+<div id="note">数据来源：伦敦金、纳指期货、上海金来自新浪财经公开行情；数字货币来自 Gate.io 公开行情（CoinGecko 备用）。每 15 秒自动刷新。积存金两行是参考价：两家银行的积存金都锚定上海黄金交易所价格加减点差，没有公开实时接口，这里显示锚定价，买卖请以银行 App 当时报价为准。</div>
 <script>
 var FERRY='https://greentang49-libretv.pages.dev/p?u=';
 function $(id){return document.getElementById(id)}
@@ -62,14 +62,29 @@ function sina(cb){
     cb(field('hf_XAU'),field('hf_NQ'),field('gds_AUTD'),field('fx_susdcny'));
   }).catch(function(){cb(null,null,null,null)});
 }
-function okx(sym,id,dec){
-  var u='https://www.okx.com/api/v5/market/ticker?instId='+sym;
-  fetch(u).then(function(r){return r.json()}).then(function(j){
-    var d=j&&j.data&&j.data[0];
+var COINS=[['BTC_USDT','bitcoin','c-btc',1],['ETH_USDT','ethereum','c-eth',2],['DOGE_USDT','dogecoin','c-doge',5],['SOL_USDT','solana','c-sol',2]];
+function gateOne(c){
+  return fetch('https://api.gateio.ws/api/v4/spot/tickers?currency_pair='+c[0]).then(function(r){return r.json()}).then(function(j){
+    var d=j&&j[0];
     if(!d)throw 0;
-    var last=parseFloat(d.last),open=parseFloat(d.open24h);
-    setCard(id,last,(last-open)/open*100,dec);
-  }).catch(function(){stale(id)});
+    setCard(c[2],parseFloat(d.last),parseFloat(d.change_percentage),c[3]);
+    return true;
+  }).catch(function(){return false});
+}
+function loadCrypto(){
+  var ps=COINS.map(gateOne);
+  Promise.all(ps).then(function(res){
+    if(res.indexOf(false)<0)return;
+    fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,dogecoin,solana&vs_currencies=usd&include_24hr_change=true').then(function(r){return r.json()}).then(function(j){
+      COINS.forEach(function(c,i){
+        if(res[i])return;
+        var d=j&&j[c[1]];
+        if(d)setCard(c[2],d.usd,d.usd_24h_change,c[3]); else stale(c[2]);
+      });
+    }).catch(function(){
+      COINS.forEach(function(c,i){ if(!res[i]) stale(c[2]); });
+    });
+  });
 }
 function loadAll(){
   sina(function(xau,nq,autd,fx){
@@ -92,10 +107,7 @@ function loadAll(){
     var d=new Date();
     $('upd').textContent='更新于 '+d.getHours()+':'+('0'+d.getMinutes()).slice(-2)+':'+('0'+d.getSeconds()).slice(-2);
   });
-  okx('BTC-USDT','c-btc',1);
-  okx('ETH-USDT','c-eth',2);
-  okx('DOGE-USDT','c-doge',5);
-  okx('SOL-USDT','c-sol',2);
+  loadCrypto();
 }
 loadAll();
 setInterval(function(){ if(!document.hidden) loadAll(); },15000);
