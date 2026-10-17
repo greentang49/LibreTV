@@ -24,6 +24,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
 <body>
 <header><div id="ttl">📈 实时行情</div><div id="upd">加载中…</div></header>
 <div id="grid">
+  <div class="card" id="c-ratio"><div class="nm">比特币 / 以太币 汇率</div><div class="pr">--</div><div class="ch">--</div><div class="sub" id="s-ratio">1 比特币 兑 以太坊</div></div>
   <div class="card" id="c-xau"><div class="nm">伦敦金（美元/盎司）</div><div class="pr">--</div><div class="ch">--</div><div class="sub" id="s-xau"></div></div>
   <div class="card" id="c-nq"><div class="nm">纳指期货（纳斯达克100）</div><div class="pr">--</div><div class="ch">--</div><div class="sub">美股盘前盘后也跳动</div></div>
   <div class="card" id="c-btc"><div class="nm">比特币 BTC（美元）</div><div class="pr">--</div><div class="ch">--</div><div class="sub">24 小时涨跌</div></div>
@@ -62,12 +63,24 @@ function sina(cb){
     cb(field('hf_XAU'),field('hf_NQ'),field('gds_AUTD'),field('fx_susdcny'));
   }).catch(function(){cb(null,null,null,null)});
 }
+var CRES={};
 var COINS=[['BTC_USDT','bitcoin','c-btc',1],['ETH_USDT','ethereum','c-eth',2],['DOGE_USDT','dogecoin','c-doge',5],['SOL_USDT','solana','c-sol',2]];
+function ratio(){
+  var b=CRES['bitcoin'],e=CRES['ethereum'];
+  if(!b||!e)return;
+  var r=b.last/e.last;
+  var bo=b.last/(1+b.pct/100),eo=e.last/(1+e.pct/100);
+  var pct=(r/(bo/eo)-1)*100;
+  setCard('c-ratio',r,pct,3);
+  $('s-ratio').textContent='1 比特币 = '+r.toFixed(3)+' 以太坊 · 1 以太坊 ≈ '+(e.last/b.last).toFixed(5)+' 比特币';
+}
 function gateOne(c){
   return fetch('https://api.gateio.ws/api/v4/spot/tickers?currency_pair='+c[0]).then(function(r){return r.json()}).then(function(j){
     var d=j&&j[0];
     if(!d)throw 0;
     setCard(c[2],parseFloat(d.last),parseFloat(d.change_percentage),c[3]);
+    CRES[c[1]]={last:parseFloat(d.last),pct:parseFloat(d.change_percentage)};
+    ratio();
     return true;
   }).catch(function(){return false});
 }
@@ -79,7 +92,7 @@ function loadCrypto(){
       COINS.forEach(function(c,i){
         if(res[i])return;
         var d=j&&j[c[1]];
-        if(d)setCard(c[2],d.usd,d.usd_24h_change,c[3]); else stale(c[2]);
+        if(d){setCard(c[2],d.usd,d.usd_24h_change,c[3]); CRES[c[1]]={last:d.usd,pct:d.usd_24h_change}; ratio();} else stale(c[2]);
       });
     }).catch(function(){
       COINS.forEach(function(c,i){ if(!res[i]) stale(c[2]); });
