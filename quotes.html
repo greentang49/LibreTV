@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>实时行情</title>
+<style>
+body{margin:0;background:linear-gradient(160deg,#0b1020,#16213d 60%,#1d1440);color:#fff;font-family:sans-serif;min-height:100vh}
+header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 6px}
+#ttl{font-size:22px;font-weight:700}
+#upd{font-size:12px;color:#9fb4d8}
+#grid{display:flex;flex-wrap:wrap;gap:12px;padding:12px 16px}
+.card{flex:1 1 42%;min-width:150px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:14px 14px 12px}
+.card .nm{font-size:15px;color:#cfe0ff}
+.card .pr{font-size:30px;font-weight:800;margin:6px 0 2px;font-variant-numeric:tabular-nums}
+.card .ch{font-size:14px;font-variant-numeric:tabular-nums}
+.card .sub{font-size:11px;color:#8ea3c7;margin-top:5px;line-height:1.5}
+.up{color:#ff5b5b}.dn{color:#2fd67c}.flat{color:#aab8d0}
+.stale{opacity:.45}
+#note{padding:2px 16px 20px;font-size:12px;color:#7e90b5;line-height:1.6}
+#btn{display:block;margin:4px auto 0;background:#2f6df6;color:#fff;border:0;border-radius:10px;font-size:15px;padding:10px 34px}
+</style>
+</head>
+<body>
+<header><div id="ttl">📈 实时行情</div><div id="upd">加载中…</div></header>
+<div id="grid">
+  <div class="card" id="c-xau"><div class="nm">伦敦金（美元/盎司）</div><div class="pr">--</div><div class="ch">--</div><div class="sub" id="s-xau"></div></div>
+  <div class="card" id="c-nq"><div class="nm">纳指期货（纳斯达克100）</div><div class="pr">--</div><div class="ch">--</div><div class="sub">美股盘前盘后也跳动</div></div>
+  <div class="card" id="c-btc"><div class="nm">比特币 BTC（美元）</div><div class="pr">--</div><div class="ch">--</div><div class="sub">24 小时涨跌</div></div>
+  <div class="card" id="c-eth"><div class="nm">以太坊 ETH（美元）</div><div class="pr">--</div><div class="ch">--</div><div class="sub">24 小时涨跌</div></div>
+  <div class="card" id="c-doge"><div class="nm">狗狗币 DOGE（美元）</div><div class="pr">--</div><div class="ch">--</div><div class="sub">24 小时涨跌</div></div>
+  <div class="card" id="c-sol"><div class="nm">SOL（美元）</div><div class="pr">--</div><div class="ch">--</div><div class="sub">24 小时涨跌</div></div>
+  <div class="card" id="c-ccb"><div class="nm">建行积存金（元/克 · 参考）</div><div class="pr">--</div><div class="ch">--</div><div class="sub">锚定上金所黄金延期，实际成交以建行 App 报价为准</div></div>
+  <div class="card" id="c-icbc"><div class="nm">工行积存金（元/克 · 参考）</div><div class="pr">--</div><div class="ch">--</div><div class="sub">锚定上金所黄金延期，实际成交以工行 App 报价为准</div></div>
+</div>
+<button id="btn" onclick="loadAll()">立即刷新</button>
+<div id="note">数据来源：伦敦金、纳指期货、上海金来自新浪财经公开行情；数字货币来自 OKX 公开行情。每 15 秒自动刷新。积存金两行是参考价：两家银行的积存金都锚定上海黄金交易所价格加减点差，没有公开实时接口，这里显示锚定价，买卖请以银行 App 当时报价为准。</div>
+<script>
+var FERRY='https://greentang49-libretv.pages.dev/p?u=';
+function $(id){return document.getElementById(id)}
+function fmt(n,d){if(n==null||isNaN(n))return '--';return Number(n).toFixed(d)}
+function setCard(id,price,chgPct,dec){
+  var c=$(id); if(!c)return;
+  c.className=c.className.replace(' stale','');
+  c.querySelector('.pr').textContent=fmt(price,dec);
+  var e=c.querySelector('.ch');
+  if(chgPct==null||isNaN(chgPct)){e.textContent='--';e.className='ch flat';}
+  else{
+    var up=chgPct>=0;
+    e.textContent=(up?'▲ +':'▼ ')+chgPct.toFixed(2)+'%';
+    e.className='ch '+(up?'up':'dn');
+  }
+}
+function stale(id){var c=$(id); if(c&&c.className.indexOf('stale')<0)c.className+=' stale'}
+function sina(cb){
+  var u=FERRY+encodeURIComponent('https://hq.sinajs.cn/list=hf_XAU,hf_NQ,gds_AUTD,fx_susdcny');
+  fetch(u).then(function(r){return r.text()}).then(function(t){
+    function field(code){
+      var m=t.match(new RegExp('hq_str_'+code+'="([^"]*)"'));
+      return m?m[1].split(','):null;
+    }
+    cb(field('hf_XAU'),field('hf_NQ'),field('gds_AUTD'),field('fx_susdcny'));
+  }).catch(function(){cb(null,null,null,null)});
+}
+function okx(sym,id,dec){
+  var u='https://www.okx.com/api/v5/market/ticker?instId='+sym;
+  fetch(u).then(function(r){return r.json()}).then(function(j){
+    var d=j&&j.data&&j.data[0];
+    if(!d)throw 0;
+    var last=parseFloat(d.last),open=parseFloat(d.open24h);
+    setCard(id,last,(last-open)/open*100,dec);
+  }).catch(function(){stale(id)});
+}
+function loadAll(){
+  sina(function(xau,nq,autd,fx){
+    var rate=fx?parseFloat(fx[1]):NaN;
+    if(xau&&xau[0]){
+      var p=parseFloat(xau[0]),pc=parseFloat(xau[7]);
+      setCard('c-xau',p,(p-pc)/pc*100,2);
+      if(!isNaN(rate)&&rate>0)$('s-xau').textContent='折合约 ¥'+(p*rate/31.1035).toFixed(2)+'/克（按美元兑人民币 '+rate.toFixed(4)+' 折算）';
+    } else stale('c-xau');
+    if(nq&&nq[0]){
+      var q=parseFloat(nq[0]),qc=parseFloat(nq[7]);
+      setCard('c-nq',q,(q-qc)/qc*100,2);
+    } else stale('c-nq');
+    if(autd&&autd[0]){
+      var a=parseFloat(autd[0]),ac=parseFloat(autd[7]);
+      var pct=(a-ac)/ac*100;
+      setCard('c-ccb',a,pct,2);
+      setCard('c-icbc',a,pct,2);
+    } else { stale('c-ccb'); stale('c-icbc'); }
+    var d=new Date();
+    $('upd').textContent='更新于 '+d.getHours()+':'+('0'+d.getMinutes()).slice(-2)+':'+('0'+d.getSeconds()).slice(-2);
+  });
+  okx('BTC-USDT','c-btc',1);
+  okx('ETH-USDT','c-eth',2);
+  okx('DOGE-USDT','c-doge',5);
+  okx('SOL-USDT','c-sol',2);
+}
+loadAll();
+setInterval(function(){ if(!document.hidden) loadAll(); },15000);
+</script>
+</body>
+</html>
