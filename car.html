@@ -6,17 +6,24 @@
 <title>车机主页</title>
 <style>
 *{box-sizing:border-box}
-body{margin:0;background:#0e0e12;color:#eee;font-family:sans-serif}
+body{margin:0;background:linear-gradient(160deg,#141a2e,#0e0e12 55%,#1a1030);color:#eee;font-family:sans-serif;min-height:100vh}
 #home{padding:18px 16px 26px}
 #clock{font-size:40px;font-weight:700;letter-spacing:1px}
 #date{font-size:15px;color:#9aa;margin:4px 0 16px}
-#brand{font-size:32px;font-weight:900;letter-spacing:3px;margin:2px 0 8px;background:linear-gradient(90deg,#ff5f6d,#ffc371,#4ade80,#38bdf8,#c084fc);-webkit-background-clip:text;background-clip:text;color:transparent}
+#brand{display:inline-block;font-size:32px;font-weight:900;letter-spacing:3px;margin:2px 0 8px;background:linear-gradient(90deg,#ff5f6d,#ffc371,#4ade80,#38bdf8,#c084fc);-webkit-background-clip:text;background-clip:text;color:transparent}
 .grid{display:flex;flex-wrap:wrap;gap:12px}
-a.tile{display:block;flex:1 1 30%;min-width:150px;background:#1b1b23;border:1px solid #2c2c38;border-radius:14px;padding:20px 8px 16px;text-align:center;text-decoration:none;color:#eee}
+a.tile{display:block;flex:1 1 30%;min-width:150px;border:0;border-radius:14px;padding:20px 8px 16px;text-align:center;text-decoration:none;color:#fff;box-shadow:0 4px 14px rgba(0,0,0,.35);text-shadow:0 1px 3px rgba(0,0,0,.45)}
+.grid a.tile:nth-child(1){background:linear-gradient(135deg,#2563eb,#7c3aed)}
+.grid a.tile:nth-child(2){background:linear-gradient(135deg,#0d9488,#22c55e)}
+.grid a.tile:nth-child(3){background:linear-gradient(135deg,#db2777,#8b5cf6)}
+.grid a.tile:nth-child(4){background:linear-gradient(135deg,#ea580c,#f59e0b)}
+.grid a.tile:nth-child(5){background:linear-gradient(135deg,#7c3aed,#ec4899)}
+.grid a.tile:nth-child(6){background:linear-gradient(135deg,#dc2626,#f97316)}
+.grid a.tile:nth-child(7){background:linear-gradient(135deg,#1e3a8a,#b45309)}
 a.tile .ico{font-size:36px}
 a.tile .t{font-size:18px;margin-top:8px}
-a.tile .s{font-size:12px;color:#8a8a96;margin-top:3px}
-a.tile:active{background:#2e4a38}
+a.tile .s{font-size:12px;color:rgba(255,255,255,.82);margin-top:3px}
+a.tile:active{filter:brightness(1.25)}
 a.tile.wide{flex:1 1 100%}
 #bar{display:none;height:48px;background:#17171f;border-bottom:1px solid #2c2c38;align-items:center;padding:0 10px;gap:10px}
 #bar.on{display:flex}
