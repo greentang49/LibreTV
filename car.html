@@ -6,11 +6,12 @@
 <title>车机主页</title>
 <style>
 *{box-sizing:border-box}
-body{margin:0;background:linear-gradient(160deg,#141a2e,#0e0e12 55%,#1a1030);color:#eee;font-family:sans-serif;min-height:100vh}
+body{margin:0;background:#0b1020 url('carbg.jpg') center/cover no-repeat fixed;color:#eee;font-family:sans-serif;min-height:100vh}
+#clock,#date{text-shadow:0 2px 10px rgba(0,0,0,.85)}
 #home{padding:18px 16px 26px}
 #clock{font-size:40px;font-weight:700;letter-spacing:1px}
 #date{font-size:15px;color:#9aa;margin:4px 0 16px}
-#brand{display:inline-block;font-size:32px;font-weight:900;letter-spacing:3px;margin:2px 0 8px;background:linear-gradient(90deg,#ff5f6d,#ffc371,#4ade80,#38bdf8,#c084fc);-webkit-background-clip:text;background-clip:text;color:transparent}
+#brand{display:inline-block;font-size:32px;font-weight:900;letter-spacing:3px;margin:2px 0 8px;background:linear-gradient(90deg,#ff5f6d,#ffc371,#4ade80,#38bdf8,#c084fc);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 2px 5px rgba(0,0,0,.65))}
 .grid{display:flex;flex-wrap:wrap;gap:12px}
 a.tile{display:block;flex:1 1 30%;min-width:150px;border:0;border-radius:14px;padding:20px 8px 16px;text-align:center;text-decoration:none;color:#fff;box-shadow:0 4px 14px rgba(0,0,0,.35);text-shadow:0 1px 3px rgba(0,0,0,.45)}
 .grid a.tile:nth-child(1){background:linear-gradient(135deg,#2563eb,#7c3aed)}
@@ -106,7 +107,6 @@ function go(id){
     f.setAttribute('allow','autoplay; fullscreen');
     var lo=document.getElementById('load');
     lo.style.display='block';
-    var tries=0;
     var iv=setInterval(function(){
       tries++;
       var done=false;
