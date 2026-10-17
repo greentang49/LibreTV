@@ -24,6 +24,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
 <body>
 <header><div id="ttl">📈 实时行情</div><div id="upd">加载中…</div></header>
 <div id="grid">
+  <div class="card" id="c-pair"><div class="nm">以太币 / 比特币 交易对 ETH/BTC</div><div class="pr">--</div><div class="ch">--</div><div class="sub" id="s-pair">Gate.io 现货交易对</div></div>
   <div class="card" id="c-ratio"><div class="nm">比特币 / 以太币 汇率</div><div class="pr">--</div><div class="ch">--</div><div class="sub" id="s-ratio">1 比特币 兑 以太坊</div></div>
   <div class="card" id="c-xau"><div class="nm">伦敦金（美元/盎司）</div><div class="pr">--</div><div class="ch">--</div><div class="sub" id="s-xau"></div></div>
   <div class="card" id="c-nq"><div class="nm">纳指期货（纳斯达克100）</div><div class="pr">--</div><div class="ch">--</div><div class="sub">美股盘前盘后也跳动</div></div>
@@ -73,6 +74,26 @@ function ratio(){
   var pct=(r/(bo/eo)-1)*100;
   setCard('c-ratio',r,pct,3);
   $('s-ratio').textContent='1 比特币 = '+r.toFixed(3)+' 以太坊 · 1 以太坊 ≈ '+(e.last/b.last).toFixed(5)+' 比特币';
+  if(!PAIR_OK)pairFallback();
+}
+var PAIR_OK=false;
+function pairFallback(){
+  var b=CRES['bitcoin'],e=CRES['ethereum'];
+  if(!b||!e)return;
+  var r=e.last/b.last;
+  var bo=b.last/(1+b.pct/100),eo=e.last/(1+e.pct/100);
+  var pct=(r/(eo/bo)-1)*100;
+  setCard('c-pair',r,pct,6);
+  $('s-pair').textContent='按 BTC、ETH 美元价折算';
+}
+function loadPair(){
+  fetch('https://api.gateio.ws/api/v4/spot/tickers?currency_pair=ETH_BTC').then(function(r){return r.json()}).then(function(j){
+    var d=j&&j[0];
+    if(!d)throw 0;
+    PAIR_OK=true;
+    setCard('c-pair',parseFloat(d.last),parseFloat(d.change_percentage),6);
+    $('s-pair').textContent='Gate.io 现货 · 24h 高 '+d.high_24h+' / 低 '+d.low_24h;
+  }).catch(function(){ pairFallback(); });
 }
 function gateOne(c){
   return fetch('https://api.gateio.ws/api/v4/spot/tickers?currency_pair='+c[0]).then(function(r){return r.json()}).then(function(j){
@@ -121,6 +142,7 @@ function loadAll(){
     $('upd').textContent='更新于 '+d.getHours()+':'+('0'+d.getMinutes()).slice(-2)+':'+('0'+d.getSeconds()).slice(-2);
   });
   loadCrypto();
+  loadPair();
 }
 loadAll();
 setInterval(function(){ if(!document.hidden) loadAll(); },15000);
