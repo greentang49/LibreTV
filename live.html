@@ -39,7 +39,7 @@ var CHANNELS=[
 ["翡翠台","https://cdn3.indevs.in/stream/live/jade/"],
 ["凤凰中文","api:f7f48462-9b13-485b-8101-7b54716411ec","https://greentang49-libretv.pages.dev/p?u=https%3A%2F%2Fcdn.qd.je%2F163189%2Ffhzw"],
 ["凤凰资讯","api:7c96b084-60e1-40a9-89c5-682b994fb680","https://greentang49-libretv.pages.dev/p?u=https%3A%2F%2Fcdn.qd.je%2F163189%2Ffhzx"],
-["凤凰香港","api:15e02d92-1698-416c-af2f-3e9a872b4d78","https://greentang49-libretv.pages.dev/p?u=https%3A%2F%2Fcdn.qd.je%2F163189%2Fcwjd"],
+["凤凰香港","api:15e02d92-1698-416c-af2f-3e9a872b4d78","https://greentang49-libretv.pages.dev/p?u=https%3A%2F%2Fcdn.qd.je%2F163189%2Ffhhk"],
 // == 港澳台环球组 (qd.je relay via ferry, added 2026-10-17; delete this whole block to remove) ==
 ["HOY TV","https://greentang49-libretv.pages.dev/p?u=https%3A%2F%2Fcdn.qd.je%2F163189%2Fhoy"],
 ["HOY TV2","https://greentang49-libretv.pages.dev/p?u=https%3A%2F%2Fcdn.qd.je%2F163189%2Fhoy2"],
@@ -143,9 +143,9 @@ var CHANNELS=[
 ["金鹰纪实","https://phoneal.qing.mgtv.com/nn_live/nn_x64/Y2RuZXhfaWQ9YWxfaGxzX2xkdnQmZT02OTE0NjA0JnY9MSZpZD1ITldTWkdTVCZzPTcwN2RiYTc2YzJjNmJmMTQ4MmUyZGYzOWU2NWM3YWFi/JYJSMPP360.m3u8"],
 ["金鹰卡通","https://phoneal.qing.mgtv.com/nn_live/nn_x64/Y2RuZXhfaWQ9YWxfaGxzX2xkdnQmZT02OTE0NjA0JnY9MSZpZD1ITldTWkdTVCZzPTcwN2RiYTc2YzJjNmJmMTQ4MmUyZGYzOWU2NWM3YWFi/JYKTMPP360.m3u8"],
 ["长沙新闻","https://phoneal.qing.mgtv.com/nn_live/nn_x64/Y2RuZXhfaWQ9YWxfaGxzX2xkdnQmZT02OTE0NjA0JnY9MSZpZD1ITldTWkdTVCZzPTcwN2RiYTc2YzJjNmJmMTQ4MmUyZGYzOWU2NWM3YWFi/CSXWMPP360.m3u8"],
+["快乐垂钓","https://phoneal.qing.mgtv.com/nn_live/nn_x64/Y2RuZXhfaWQ9YWxfaGxzX2xkdnQmZT02OTE0NjA0JnY9MSZpZD1ITldTWkdTVCZzPTcwN2RiYTc2YzJjNmJmMTQ4MmUyZGYzOWU2NWM3YWFi/KLCDMPP360.m3u8"],
 ["苏州4K","https://live-auth.51kandianshi.com/szgd/csztv4k_hd.m3u8"],
 ["河北4K","https://event.pull.hebtv.com:443/live/live101.m3u8"],
-["快乐垂钓","https://phoneal.qing.mgtv.com/nn_live/nn_x64/Y2RuZXhfaWQ9YWxfaGxzX2xkdnQmZT02OTE0NjA0JnY9MSZpZD1ITldTWkdTVCZzPTcwN2RiYTc2YzJjNmJmMTQ4MmUyZGYzOWU2NWM3YWFi/KLCDMPP360.m3u8"],
 ["晋江电视台","https://live.ijjnews.com/jjtv/sd/live.m3u8"],
 ["萧山电视台","https://l.cztvcloud.com/channels/lantian/SXxiaoshan2/720p.m3u8"],
 ["苏州娱乐","https://live-auth.51kandianshi.com/szgd/csztv4.m3u8"],
@@ -187,7 +187,7 @@ function playFlv(id,alt){
 function play(name,url,btn,alt){
   document.querySelectorAll('button.ch').forEach(function(b){b.classList.remove('active')});
   if(btn)btn.classList.add('active');
-  nowEl.textContent='正在播放：'+name; errEl.style.display='none';
+  nowEl.textContent='正在播放：'+name;errEl.style.display='none';
   if(hls){hls.destroy();hls=null}
   killFlv();
   if(url.indexOf('api:')===0){
