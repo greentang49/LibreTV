@@ -126,9 +126,8 @@ function playHls(url){
     hls.on(Hls.Events.ERROR,function(e,d){if(d&&d.fatal){errEl.style.display='block'}});
   }else{errEl.style.display='block'}
 }
-function playFlv(mintUrl,alt){
-  var mu='/p?u='+encodeURIComponent(mintUrl)+'&mode=url';
-  fetch(mu).then(function(r){return r.text()}).then(function(loc){
+function playFlv(id,alt){
+  fetch('https://openwrt.taild74ff8.ts.net/mint/'+id).then(function(r){return r.text()}).then(function(loc){
     var m=/\/live\/[^?\s]+\.flv\?.*/.exec(loc||'');
     if(!m||!window.mpegts||!mpegts.isSupported()){if(alt)playHls(alt);else errEl.style.display='block';return}
     flvp=mpegts.createPlayer({type:'flv',isLive:true,url:'https://qitv.fengshows.cn'+m[0]},{enableStashBuffer:false});
@@ -145,7 +144,7 @@ function play(name,url,btn,alt){
   if(hls){hls.destroy();hls=null}
   killFlv();
   if(url.indexOf('mint:')===0){
-    playFlv('http://mint.chining.eu.org:88/phenix.php?id='+url.substring(5),alt);
+    playFlv(url.substring(5),alt);
     return;
   }
   playHls(url);
