@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>联通源测试</title>
+<script src="https://greentang49-libretv.pages.dev/libs/hls.min.js"></script>
+<style>
+body{margin:0;background:#111;color:#eee;font-family:sans-serif;padding:14px}
+h2{font-size:17px;margin:12px 0 8px;color:#fc0}
+video{width:100%;max-height:52vh;background:#000}
+.grid{display:flex;flex-wrap:wrap;gap:8px}
+button{flex:1 1 30%;padding:13px 4px;font-size:15px;border:0;border-radius:8px;background:#2a2a35;color:#eee}
+button:active{background:#4a6}
+#st{margin-top:10px;font-size:13px;color:#9cf;word-break:break-all;min-height:34px}
+</style>
+</head>
+<body>
+<video id="v" controls playsinline></video>
+<div id="st">点下面的频道开始测试。黑屏超过15秒就换下一个，并记下是哪个。</div>
+<h2>江西联通平台（39.135.140.104）</h2>
+<div class="grid" id="g1"></div>
+<h2>四川联通平台（169ol）</h2>
+<div class="grid" id="g2"></div>
+<script>
+var v=document.getElementById('v'),st=document.getElementById('st'),hls=null;
+function play(name,url){
+  st.textContent='正在加载：'+name+' …';
+  if(hls){hls.destroy();hls=null}
+  if(v.canPlayType('application/vnd.apple.mpegurl')){
+    v.src=url;
+  }else if(window.Hls&&Hls.isSupported()){
+    hls=new Hls({liveSyncDurationCount:3});
+    hls.loadSource(url);
+    hls.attachMedia(v);
+    hls.on(Hls.Events.ERROR,function(e,d){
+      if(d&&d.fatal){st.textContent=name+' 出错：'+d.type+' / '+(d.details||'')+'（请截图）'}
+    });
+  }else{
+    st.textContent='浏览器不支持 HLS';
+    return;
+  }
+  var pr=v.play();
+  if(pr&&pr.catch)pr.catch(function(){});
+  setTimeout(function(){
+    if(v.readyState>=2){st.textContent=name+' 应该出画面了，画面流畅度请你判断'}
+  },6000);
+}
+var JX='http://39.135.140.104:6610/PLTV/88888888/224/';
+var SC='http://sc.rrs.169ol.com/PLTV/88888888/224/';
+var A=[['CCTV1',JX+'3221227034/index.m3u8'],['CCTV5',JX+'3221227264/index.m3u8'],['CCTV13新闻',JX+'3221227314/index.m3u8'],['湖南卫视',JX+'3221227037/index.m3u8'],['东方卫视',JX+'3221227230/index.m3u8'],['江苏卫视',JX+'3221226974/index.m3u8'],['江西卫视',JX+'3221226961/index.m3u8']];
+var B=[['CCTV1高清',SC+'3221227479/index.m3u8'],['四川卫视',SC+'3221227417/index.m3u8']];
+function fill(id,list){
+  var g=document.getElementById(id);
+  for(var i=0;i<list.length;i++){
+    (function(n,u){
+      var b=document.createElement('button');
+      b.textContent=n;
+      b.onclick=function(){play(n,u)};
+      g.appendChild(b);
+    })(list[i][0],list[i][1]);
+  }
+}
+fill('g1',A);
+fill('g2',B);
+</script>
+</body>
+</html>
