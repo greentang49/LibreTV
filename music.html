@@ -82,7 +82,7 @@ function render(){
   var h='';
   for(var i=0;i<queue.length;i++){
     var it=queue[i];
-    h+='<div class="item'+(i===cur?' cur':'')+'" data-i="'+i+'"><img src="'+esc(it.pic||'')+'"><div><div class="t">'+esc(it.name)+(it.pay?'<span class="badge">付费</span>':'')+'</div><div class="a">'+esc(it.artist)+'</div></div></div>';
+    h+='<div class="item'+(i===cur?' cur':'')+'" data-i="'+i+'"><img loading="lazy" src="'+esc(it.pic||'')+'"><div><div class="t">'+esc(it.name)+(it.pay?'<span class="badge">付费</span>':'')+'</div><div class="a">'+esc(it.artist)+'</div></div></div>';
   }
   $('list').innerHTML=h||'<div style="padding:16px;color:#8b95a3">暂无歌曲</div>';
   var items=document.querySelectorAll('.item');
