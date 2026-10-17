@@ -28,7 +28,7 @@ a.tile.wide{flex:1 1 100%}
 #stage.on{display:block}
 #stage iframe{width:100%;height:100%;border:0;display:none;background:#000}
 #stage iframe.on{display:block}
-#load{position:absolute;left:0;right:0;top:38%;text-align:center;font-size:17px;color:#9cf;display:none}
+#load{position:absolute;left:50%;top:12px;transform:translateX(-50%);background:rgba(20,20,28,.88);border:1px solid #3a3a4a;border-radius:999px;padding:8px 18px;font-size:15px;color:#9cf;display:none;pointer-events:none;z-index:5}
 </style>
 </head>
 <body>
@@ -97,8 +97,15 @@ function go(id){
     f=document.createElement('iframe');
     f.setAttribute('allowfullscreen','');
     f.setAttribute('allow','autoplay; fullscreen');
-    document.getElementById('load').style.display='block';
-    f.onload=function(){document.getElementById('load').style.display='none'};
+    var lo=document.getElementById('load');
+    lo.style.display='block';
+    var tries=0;
+    var iv=setInterval(function(){
+      tries++;
+      var done=false;
+      try{done=f.contentWindow.document.readyState!=='loading'}catch(e){}
+      if(done||tries>12){lo.style.display='none';clearInterval(iv)}
+    },400);
     f.src=s.u;
     document.getElementById('stage').appendChild(f);
     frames[id]=f;
