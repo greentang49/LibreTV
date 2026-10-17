@@ -130,7 +130,7 @@ function playFlv(id,alt){
   fetch('https://openwrt.taild74ff8.ts.net/mint/'+id).then(function(r){return r.text()}).then(function(loc){
     var m=/\/live\/[^?\s]+\.flv\?.*/.exec(loc||'');
     if(!m||!window.mpegts||!mpegts.isSupported()){if(alt)playHls(alt);else errEl.style.display='block';return}
-    flvp=mpegts.createPlayer({type:'flv',isLive:true,url:'https://qitv.fengshows.cn'+m[0]},{enableStashBuffer:false});
+    flvp=mpegts.createPlayer({type:'flv',isLive:true,url:'https://qitv.fengshows.cn'+m[0]},{enableStashBuffer:true,stashInitialSize:512});
     flvp.attachMediaElement(v);
     flvp.on(mpegts.Events.ERROR,function(){killFlv();if(alt)playHls(alt)});
     flvp.load();
