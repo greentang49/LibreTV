@@ -37,9 +37,9 @@ video{width:100%;aspect-ratio:16/9;background:#000;border-radius:12px}
 var CHANNELS=[
 ["江西卫视","https://kzhibo.pages.dev/channel/602?type=2"],
 ["翡翠台","https://cdn3.indevs.in/stream/live/jade/"],
-["凤凰中文","mint:fhzw","https://greentang49-libretv.pages.dev/p?u=https%3A%2F%2Fcdn.qd.je%2F163189%2Ffhzw"],
-["凤凰资讯","mint:fhzx","https://greentang49-libretv.pages.dev/p?u=https%3A%2F%2Fcdn.qd.je%2F163189%2Ffhzx"],
-["凤凰香港","https://greentang49-libretv.pages.dev/p?u=https%3A%2F%2Fcdn.qd.je%2F163189%2Fcwjd"],
+["凤凰中文","api:f7f48462-9b13-485b-8101-7b54716411ec","https://greentang49-libretv.pages.dev/p?u=https%3A%2F%2Fcdn.qd.je%2F163189%2Ffhzw"],
+["凤凰资讯","api:7c96b084-60e1-40a9-89c5-682b994fb680","https://greentang49-libretv.pages.dev/p?u=https%3A%2F%2Fcdn.qd.je%2F163189%2Ffhzx"],
+["凤凰香港","api:15e02d92-1698-416c-af2f-3e9a872b4d78","https://greentang49-libretv.pages.dev/p?u=https%3A%2F%2Fcdn.qd.je%2F163189%2Fcwjd"],
 ["人间卫视","https://5ddce30eb4b55.streamlock.net/bltvhd/bltv1/playlist.m3u8"],
 ["TITV 原住民台","https://streamipcfapp.akamaized.net/live/_definst_/live_720/key_b1500.m3u8"],
 ["唯心電視","https://mobile.ccdntech.com/transcoder/_definst_/vod164_Live/live/chunklist_w1177047531.m3u8"],
@@ -127,8 +127,9 @@ function playHls(url){
   }else{errEl.style.display='block'}
 }
 function playFlv(id,alt){
-  fetch('https://openwrt.taild74ff8.ts.net/mint/'+id).then(function(r){return r.text()}).then(function(loc){
-    var m=/\/live\/[^?\s]+\.flv\?.*/.exec(loc||'');
+  fetch('https://api.fengshows.cn/hub/live/auth-url?live_id='+id+'&live_qa=hd').then(function(r){return r.json()}).then(function(j){
+    var loc=(j&&j.data&&j.data.live_url)||'';
+    var m=/\/live\/[^?\s]+\.flv\?.*/.exec(loc);
     if(!m||!window.mpegts||!mpegts.isSupported()){if(alt)playHls(alt);else errEl.style.display='block';return}
     flvp=mpegts.createPlayer({type:'flv',isLive:true,url:'https://qitv.fengshows.cn'+m[0]},{enableStashBuffer:true,stashInitialSize:512});
     flvp.attachMediaElement(v);
@@ -143,8 +144,8 @@ function play(name,url,btn,alt){
   nowEl.textContent='正在播放：'+name; errEl.style.display='none';
   if(hls){hls.destroy();hls=null}
   killFlv();
-  if(url.indexOf('mint:')===0){
-    playFlv(url.substring(5),alt);
+  if(url.indexOf('api:')===0){
+    playFlv(url.substring(4),alt);
     return;
   }
   playHls(url);
