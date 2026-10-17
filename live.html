@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>电视直播 - LibreTV</title>
 <script src="libs/hls.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mpegts.js@1.7.3/dist/mpegts.min.js"></script>
 <style>
 body{margin:0;background:#0b0b0f;color:#fff;font-family:sans-serif}
 header{padding:14px 18px;font-size:20px;font-weight:bold}
@@ -36,8 +37,8 @@ video{width:100%;aspect-ratio:16/9;background:#000;border-radius:12px}
 var CHANNELS=[
 ["江西卫视","https://kzhibo.pages.dev/channel/602?type=2"],
 ["翡翠台","https://cdn3.indevs.in/stream/live/jade/"],
-["凤凰中文","https://greentang49-libretv.pages.dev/p?u=https%3A%2F%2Fcdn.qd.je%2F163189%2Ffhzw"],
-["凤凰资讯","https://greentang49-libretv.pages.dev/p?u=https%3A%2F%2Fcdn.qd.je%2F163189%2Ffhzx"],
+["凤凰中文","mint:fhzw","https://greentang49-libretv.pages.dev/p?u=https%3A%2F%2Fcdn.qd.je%2F163189%2Ffhzw"],
+["凤凰资讯","mint:fhzx","https://greentang49-libretv.pages.dev/p?u=https%3A%2F%2Fcdn.qd.je%2F163189%2Ffhzx"],
 ["凤凰香港","https://greentang49-libretv.pages.dev/p?u=https%3A%2F%2Fcdn.qd.je%2F163189%2Fcwjd"],
 ["人间卫视","https://5ddce30eb4b55.streamlock.net/bltvhd/bltv1/playlist.m3u8"],
 ["TITV 原住民台","https://streamipcfapp.akamaized.net/live/_definst_/live_720/key_b1500.m3u8"],
@@ -115,12 +116,9 @@ var CHANNELS=[
 ["CCTV+ 新闻1","https://cd-live-stream.news.cctvplus.com/live/smil:CHANNEL1.smil/playlist.m3u8"],
 ["CCTV+ 新闻2","https://cd-live-stream.news.cctvplus.com/live/smil:CHANNEL2.smil/playlist.m3u8"]
 ];
-var v=document.getElementById('v'),hls=null,nowEl=document.getElementById('now'),errEl=document.getElementById('err');
-function play(name,url,btn){
-  document.querySelectorAll('button.ch').forEach(function(b){b.classList.remove('active')});
-  if(btn)btn.classList.add('active');
-  nowEl.textContent='正在播放：'+name; errEl.style.display='none';
-  if(hls){hls.destroy();hls=null}
+var v=document.getElementById('v'),hls=null,flvp=null,nowEl=document.getElementById('now'),errEl=document.getElementById('err');
+function killFlv(){if(flvp){try{flvp.pause();flvp.unload();flvp.detachMediaElement();flvp.destroy()}catch(e){} flvp=null}}
+function playHls(url){
   if(v.canPlayType('application/vnd.apple.mpegurl')){v.src=url;v.play().catch(function(){});return}
   if(Hls.isSupported()){
     hls=new Hls({liveSyncDurationCount:3});
@@ -128,10 +126,34 @@ function play(name,url,btn){
     hls.on(Hls.Events.ERROR,function(e,d){if(d&&d.fatal){errEl.style.display='block'}});
   }else{errEl.style.display='block'}
 }
+function playFlv(mintUrl,alt){
+  var mu='/p?u='+encodeURIComponent(mintUrl)+'&mode=url';
+  fetch(mu).then(function(r){return r.text()}).then(function(loc){
+    var m=/\/live\/[^?\s]+\.flv\?.*/.exec(loc||'');
+    if(!m||!window.mpegts||!mpegts.isSupported()){if(alt)playHls(alt);else errEl.style.display='block';return}
+    flvp=mpegts.createPlayer({type:'flv',isLive:true,url:'https://qitv.fengshows.cn'+m[0]},{enableStashBuffer:false});
+    flvp.attachMediaElement(v);
+    flvp.on(mpegts.Events.ERROR,function(){killFlv();if(alt)playHls(alt)});
+    flvp.load();
+    var pr=v.play();if(pr&&pr.catch)pr.catch(function(){});
+  }).catch(function(){if(alt)playHls(alt)});
+}
+function play(name,url,btn,alt){
+  document.querySelectorAll('button.ch').forEach(function(b){b.classList.remove('active')});
+  if(btn)btn.classList.add('active');
+  nowEl.textContent='正在播放：'+name; errEl.style.display='none';
+  if(hls){hls.destroy();hls=null}
+  killFlv();
+  if(url.indexOf('mint:')===0){
+    playFlv('http://mint.chining.eu.org:88/phenix.php?id='+url.substring(5),alt);
+    return;
+  }
+  playHls(url);
+}
 var grid=document.getElementById('grid');
 CHANNELS.forEach(function(c){
   var b=document.createElement('button');b.className='ch';b.textContent=c[0];
-  b.onclick=function(){play(c[0],c[1],b)};grid.appendChild(b);
+  b.onclick=function(){play(c[0],c[1],b,c[2])};grid.appendChild(b);
 });
 </script>
 </body>
