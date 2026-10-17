@@ -107,6 +107,7 @@ function go(id){
     f.setAttribute('allow','autoplay; fullscreen');
     var lo=document.getElementById('load');
     lo.style.display='block';
+    var tries=0;
     var iv=setInterval(function(){
       tries++;
       var done=false;
