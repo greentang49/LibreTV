@@ -70,7 +70,7 @@ function renderCards(list){
   var h='';
   for(var i=0;i<list.length;i++){
     var v=list[i];
-    h+='<div class="card" data-id="'+v.vod_id+'"><img src="'+esc(https(v.vod_pic||''))+'"><div class="n">'+esc(v.vod_name)+'</div><div class="r">'+esc(v.vod_remarks||'')+'</div></div>';
+    h+='<div class="card" data-id="'+v.vod_id+'"><img loading="lazy" src="'+esc(https(v.vod_pic||''))+'"><div class="n">'+esc(v.vod_name)+'</div><div class="r">'+esc(v.vod_remarks||'')+'</div></div>';
   }
   $('cards').innerHTML=h||'<div style="color:#8b95a3">没有内容</div>';
   var els=document.querySelectorAll('.card');
