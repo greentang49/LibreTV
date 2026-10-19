@@ -144,8 +144,10 @@ function loadAll(){
   loadCrypto();
   loadPair();
 }
+var VISIBLE=true;
+window.addEventListener('message',function(e){if(e.data==='shell:hide')VISIBLE=false;else if(e.data==='shell:show'){VISIBLE=true;loadAll();}});
 loadAll();
-setInterval(function(){ if(!document.hidden) loadAll(); },15000);
+setInterval(function(){ if(!document.hidden&&VISIBLE) loadAll(); },15000);
 </script>
 </body>
 </html>
