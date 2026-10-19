@@ -122,6 +122,7 @@ function go(id){
   }
   for(var k in frames){frames[k].className=(k===id?'on':'')}
   cur=id;
+  for(var k2 in frames){try{frames[k2].contentWindow.postMessage(k2===id?'shell:show':'shell:hide','*')}catch(e){}}
   refreshChip();
 }
 function home(){
@@ -130,6 +131,7 @@ function home(){
   document.getElementById('bar').className='';
   document.getElementById('home').style.display='block';
   cur=null;
+  for(var k in frames){try{frames[k].contentWindow.postMessage('shell:hide','*')}catch(e){}}
   refreshChip();
 }
 function refreshChip(){
@@ -146,9 +148,6 @@ function stopBg(){
   document.getElementById('chip2').style.display='none';
 }
 setInterval(refreshChip,3000);
-window.addEventListener('load',function(){
-  setTimeout(function(){ if(!frames.tv){ go('tv'); home(); } },4000);
-});
 </script>
 </body>
 </html>
