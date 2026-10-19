@@ -164,6 +164,7 @@ var CHANNELS=[
 ];
 var v=document.getElementById('v'),hls=null,flvp=null,nowEl=document.getElementById('now'),errEl=document.getElementById('err');
 function killFlv(){if(flvp){try{flvp.pause();flvp.unload();flvp.detachMediaElement();flvp.destroy()}catch(e){} flvp=null}}
+window.addEventListener('message',function(e){if(e.data==='shell:hide'){if(hls)try{hls.stopLoad()}catch(x){}}else if(e.data==='shell:show'){if(hls)try{hls.startLoad()}catch(x){}}});
 function playHls(url){
   if(v.canPlayType('application/vnd.apple.mpegurl')){v.src=url;v.play().catch(function(){});return}
   if(Hls.isSupported()){
