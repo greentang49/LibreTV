@@ -27,6 +27,10 @@ header{padding:14px 16px 6px;font-size:22px;font-weight:bold}
 .item .a{font-size:13px;color:#8b95a3;margin-top:2px}
 .item.cur .t{color:#1db954}
 .badge{font-size:11px;color:#f5c542;border:1px solid #f5c542;border-radius:6px;padding:1px 5px;margin-left:6px}
+.fav{margin-left:auto;flex-shrink:0;font-size:23px;padding:8px 6px;color:#5b6673}
+.fav.on{color:#ff4d6d}
+#viewbar{padding:2px 16px 6px;color:#8b95a3;font-size:14px;display:none}
+#viewbar button{font-size:13px;padding:5px 10px;border-radius:999px;border:1px solid #2a323c;background:#171d24;color:#cfd8e3;margin-left:8px}
 #lrc{padding:8px 16px;font-size:15px;line-height:1.9;color:#77808d;max-height:150px;overflow:hidden;text-align:center}
 #lrc .on{color:#fff;font-size:17px}
 #player{position:fixed;left:0;right:0;bottom:0;background:#171d24;border-top:1px solid #2a323c;padding:10px 14px}
@@ -48,6 +52,8 @@ header{padding:14px 16px 6px;font-size:22px;font-weight:bold}
 <div class="qual"><span>音质</span><button id="q320" class="on">高音质 320k</button><button id="qFLAC">无损 FLAC</button><span>FLAC 单曲几十 MB，起播慢</span></div>
 <div class="charts"><button data-chart="3778678">网易热歌榜</button><button data-chart="3779629">网易新歌榜</button><button data-chart="19723756">网易飙升榜</button></div>
   <div class="charts"><button data-chart="2945028696">华语经典老歌</button><button data-chart="14132177647">粤语金曲</button><button data-chart="13855478641">车载DJ</button><button data-chart="8580356200">开车KTV</button><button data-chart="8448080200">轻音乐助眠</button><button data-chart="6686195784">民谣</button><button data-chart="5460985377">摇滚</button><button data-chart="60198">欧美Billboard</button></div>
+<div class="charts"><button id="btnFav">❤ 自选歌单</button><button id="btnHist">🕘 播放记录</button></div>
+<div id="viewbar"></div>
 <div id="msg"></div>
 <div id="lrc"></div>
 <div id="list"></div>
@@ -72,6 +78,48 @@ function $(id){return document.getElementById(id);}
 function msg(t){$('msg').textContent=t||'';}
 function https(u){return u?u.replace(/^http:\/\//,'https://'):u;}
 function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;');}
+var FAV=[], HIST=[], view='queue';
+function lsGet(k){try{var v=localStorage.getItem(k);return v?JSON.parse(v):[];}catch(e){return[];}}
+function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+FAV=lsGet('mus_fav'); HIST=lsGet('mus_hist');
+function sameSong(a,b){return a&&b&&a.kind===b.kind&&String(a.id)===String(b.id);}
+function isFav(it){for(var i=0;i<FAV.length;i++){if(sameSong(FAV[i],it))return true;}return false;}
+function snap(it){return {kind:it.kind,id:it.id,name:it.name,artist:it.artist,pic:it.pic,pay:it.pay?1:0};}
+function toggleFav(it,ev){
+  if(ev&&ev.stopPropagation)ev.stopPropagation();
+  if(!it||!it.id){msg('这首缺少编号，无法收藏');return;}
+  if(isFav(it)){var n=[];for(var i=0;i<FAV.length;i++){if(!sameSong(FAV[i],it))n.push(FAV[i]);}FAV=n;msg('已移出自选歌单');}
+  else{FAV.unshift(snap(it));msg('已加入自选歌单');}
+  lsSet('mus_fav',FAV);
+  if(view==='fav'){queue=FAV.slice();if(cur>=queue.length)cur=-1;}
+  render();
+}
+function pushHist(it){
+  if(!it||!it.id)return;
+  var n=[snap(it)];
+  for(var i=0;i<HIST.length;i++){if(!sameSong(HIST[i],it))n.push(HIST[i]);}
+  HIST=n.slice(0,100); lsSet('mus_hist',HIST);
+  if(view==='hist'){queue=HIST.slice();cur=0;}
+}
+function setViewbar(h){var b=$('viewbar');if(h){b.innerHTML=h;b.style.display='block';}else{b.innerHTML='';b.style.display='none';}}
+function showFav(){
+  view='fav'; queue=FAV.slice(); cur=-1; render();
+  setViewbar('自选歌单 · 共 '+FAV.length+' 首');
+  msg(FAV.length?'点任意一首播放，点右侧 ♥ 取消收藏':'自选歌单还是空的，在列表里点歌曲右侧的 ♡ 收藏');
+}
+function showHistBar(){
+  setViewbar('播放记录 · 共 '+HIST.length+' 首<button id="clrHist">清空记录</button>');
+  var c=$('clrHist'); if(c)c.onclick=clearHist;
+}
+function clearHist(){
+  HIST=[]; lsSet('mus_hist',HIST);
+  if(view==='hist'){queue=[];cur=-1;render();showHistBar();}
+  msg('播放记录已清空');
+}
+function showHist(){
+  view='hist'; queue=HIST.slice(); cur=-1; render(); showHistBar();
+  msg(HIST.length?'点任意一首播放':'还没有播放记录，听过的歌会自动记在这里');
+}
 function setSrc(s){SRC=s;$('tabNE').className=(s==='netease'?'on':'');$('tabTX').className=(s==='tencent'?'on':'');}
 $('tabNE').onclick=function(){setSrc('netease');};
 $('tabTX').onclick=function(){setSrc('tencent');};
@@ -82,11 +130,14 @@ function render(){
   var h='';
   for(var i=0;i<queue.length;i++){
     var it=queue[i];
-    h+='<div class="item'+(i===cur?' cur':'')+'" data-i="'+i+'"><img loading="lazy" src="'+esc(it.pic||'')+'"><div><div class="t">'+esc(it.name)+(it.pay?'<span class="badge">付费</span>':'')+'</div><div class="a">'+esc(it.artist)+'</div></div></div>';
+    var fv=isFav(it);
+    h+='<div class="item'+(i===cur?' cur':'')+'" data-i="'+i+'"><img loading="lazy" src="'+esc(it.pic||'')+'"><div><div class="t">'+esc(it.name)+(it.pay?'<span class="badge">付费</span>':'')+'</div><div class="a">'+esc(it.artist)+'</div></div><span class="fav'+(fv?' on':'')+'" data-f="'+i+'">'+(fv?'♥':'♡')+'</span></div>';
   }
   $('list').innerHTML=h||'<div style="padding:16px;color:#8b95a3">暂无歌曲</div>';
   var items=document.querySelectorAll('.item');
   for(var j=0;j<items.length;j++){items[j].onclick=function(){play(parseInt(this.getAttribute('data-i'),10));};}
+  var fs=document.querySelectorAll('.fav');
+  for(var f=0;f<fs.length;f++){fs[f].onclick=function(e){toggleFav(queue[parseInt(this.getAttribute('data-f'),10)],e);};}
 }
 function search(){
   var q=$('q').value.replace(/^\s+|\s+$/g,'');
@@ -98,7 +149,7 @@ function search(){
       if(SRC==='netease'){queue.push({kind:'ne',id:d[i].id,name:d[i].song,artist:d[i].singer,pic:https(d[i].cover)});}
       else{queue.push({kind:'tx',id:d[i].id,name:d[i].song,artist:d[i].singer,pic:d[i].cover,pay:(d[i].pay==='付费')});}
     }
-    cur=-1; render(); msg(queue.length?('找到 '+queue.length+' 首'):'没找到，换个关键词试试');
+    cur=-1; view='queue'; setViewbar(''); render(); msg(queue.length?('找到 '+queue.length+' 首'):'没找到，换个关键词试试');
   }).catch(function(){msg('搜索失败，网络或接口异常');});
 }
 $('go').onclick=search;
@@ -111,9 +162,11 @@ function loadChart(id){
       var m=(d[i].url||'').match(/[?&]id=(\d+)/);
       queue.push({kind:'ne',id:m?m[1]:'',name:d[i].name,artist:d[i].artist,pic:d[i].pic});
     }
-    cur=-1; render(); msg('榜单 '+queue.length+' 首，点任意一首播放');
+    cur=-1; view='queue'; setViewbar(''); render(); msg('榜单 '+queue.length+' 首，点任意一首播放');
   }).catch(function(){msg('榜单加载失败');});
 }
+$('btnFav').onclick=showFav;
+$('btnHist').onclick=showHist;
 var chs=document.querySelectorAll('[data-chart]');
 for(var c=0;c<chs.length;c++){chs[c].onclick=function(){loadChart(this.getAttribute('data-chart'))};}
 function parseLrc(text){
@@ -167,7 +220,7 @@ function resolveNE(it,seq){
 }
 function play(i){
   if(i<0||i>=queue.length)return;
-  cur=i; var it=queue[i]; render();
+  cur=i; var it=queue[i]; pushHist(it); render();
   playSeq++; var seq=playSeq;
   $('ptitle').textContent=it.name; $('psinger').textContent=it.artist;
   $('pcover').src=it.pic||''; $('play').textContent='⏸';
