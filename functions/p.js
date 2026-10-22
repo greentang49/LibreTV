@@ -1,4 +1,4 @@
-const ALLOW = ["qd.je", "cc.cd", "rr.kg", "indevs.in", "cloudfront.net", "miguvideo.com", "xyzfm.space", "rycjapi.com", "101.35.240.114", "fengshows.cn", "chining.eu.org", "hidns.vip", "sryze.cc", "sinajs.cn", "okx.com", "222.223.41.27", "61.138.99.166", "163189.xyz", "bestv.cn"];
+const ALLOW = ["qd.je", "cc.cd", "rr.kg", "indevs.in", "cloudfront.net", "miguvideo.com", "xyzfm.space", "rycjapi.com", "101.35.240.114", "fengshows.cn", "chining.eu.org", "hidns.vip", "sryze.cc", "sinajs.cn", "okx.com", "222.223.41.27", "61.138.99.166", "163189.xyz", "bestv.cn", "yang-1989.xyz"];
 export async function onRequest(context) {
   const url = new URL(context.request.url);
   const u = url.searchParams.get("u");
