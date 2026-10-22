@@ -10,6 +10,7 @@ export async function onRequest(context) {
   if (!ok) return new Response("host not allowed", { status: 403 });
   const UA = { "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15" };
   if (host === "hq.sinajs.cn") UA["Referer"] = "https://finance.sina.com.cn/";
+  if (host === "101.35.240.114") UA["User-Agent"] = "AptvPlayer-UA";
   if (url.searchParams.get("mode") === "url") {
     const r0 = await fetch(target.toString(), { headers: UA, redirect: "manual" });
     const loc = r0.headers.get("location") || "";
