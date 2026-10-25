@@ -166,7 +166,6 @@ function playHls(url){
   if(Hls.isSupported()){
     hls=new Hls({liveSyncDurationCount:3});
     hls.loadSource(url);hls.attachMedia(v);
-    hls.on(Hls.Events.MANIFEST_PARSED,function(){var pr=v.play();if(pr&&pr.catch)pr.catch(function(){v.muted=true;v.play().catch(function(){})})});
     hls.on(Hls.Events.ERROR,function(e,d){if(d&&d.fatal){errEl.style.display='block'}});
   }else{errEl.style.display='block'}
 }
