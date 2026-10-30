@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YSP 低速版 - LibreTV</title>
+<script src="libs/hls.min.js"></script>
+<style>
+body{margin:0;background:#0b0b0f;color:#fff;font-family:sans-serif}
+header{padding:14px 18px;font-size:20px;font-weight:bold}
+header span{color:#e50914}
+.wrap{display:flex;gap:14px;padding:0 14px 14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;flex:1;align-content:start}
+button.ch{background:#1c1c22;color:#fff;border:1px solid #333;border-radius:12px;padding:16px 6px;font-size:16px;cursor:pointer}
+button.ch.active{background:#e50914;border-color:#e50914}
+.player{flex:2.2;min-width:300px;position:relative}
+video{width:100%;aspect-ratio:16/9;background:#000;border-radius:12px}
+.bigplay{position:absolute;left:0;top:0;width:100%;aspect-ratio:16/9;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.45);border-radius:12px;cursor:pointer;z-index:2}
+.bigplay span{background:#e50914;color:#fff;font-size:28px;font-weight:bold;padding:18px 30px;border-radius:999px}
+.now{padding:10px 2px;font-size:15px;color:#ccc}
+.err{color:#ff7b7b;font-size:14px;padding:6px 2px;display:none}
+.note{color:#777;font-size:13px;padding:0 18px 16px;line-height:1.6}
+@media (max-width:800px){.wrap{flex-direction:column}}
+</style>
+</head>
+<body>
+<header>LibreTV <span>YSP 低速版</span></header>
+<div class="wrap">
+<div class="player">
+<video id="v" controls autoplay playsinline></video>
+<div class="bigplay" id="bigplay"><span>▶ 点我播放</span></div>
+<div class="now" id="now">点右侧频道开始看直播</div>
+<div class="err" id="err">这个频道暂时播不了，换一个试试（直播源偶尔会失效）。</div>
+</div>
+<div class="grid" id="grid"></div>
+</div>
+<div class="note">InstaBox 服务器专属测试页（YSP-Yang 自建源低码率档，2026-10-28 验过真直播：CCTV-1 1.10Mbps、江西 1.34Mbps、湖南 1.20Mbps，960×540）。这台免费机子闲置 30 分钟会自动休眠，页面打不开或频道转圈时告诉 Muse 一声，唤醒一下就好；低码率档在车机流量预算（≤2Mbps）内，车机卡也能播。</div>
+<script>
+var CHANNELS=[
+// == 央视组 (YSP-Yang, InstaBox 服务器) ==
+["CCTV-1 综合","https://19981-agqxfekxlzl2y562bnoxeyujtm.instabox.tech/live/cctv1.m3u8"],
+["CCTV-2 财经","https://19981-agqxfekxlzl2y562bnoxeyujtm.instabox.tech/live/cctv2.m3u8"],
+["CCTV-3 综艺","https://19981-agqxfekxlzl2y562bnoxeyujtm.instabox.tech/live/cctv3.m3u8"],
+["CCTV-4 中文国际","https://19981-agqxfekxlzl2y562bnoxeyujtm.instabox.tech/live/cctv4.m3u8"],
+["CCTV-5 体育","https://19981-agqxfekxlzl2y562bnoxeyujtm.instabox.tech/live/cctv5.m3u8"],
+["CCTV-5+ 体育赛事","https://19981-agqxfekxlzl2y562bnoxeyujtm.instabox.tech/live/cctv5plus.m3u8"],
+["CCTV-6 电影","https://19981-agqxfekxlzl2y562bnoxeyujtm.instabox.tech/live/cctv6.m3u8"],
+["CCTV-7 国防军事","https://19981-agqxfekxlzl2y562bnoxeyujtm.instabox.tech/live/cctv7.m3u8"],
+["CCTV-8 电视剧","https://19981-agqxfekxlzl2y562bnoxeyujtm.instabox.tech/live/cctv8.m3u8"],
+["CCTV-9 纪录","https://19981-agqxfekxlzl2y562bnoxeyujtm.instabox.tech/live/cctv9.m3u8"],
+["CCTV-10 科教","https://19981-agqxfekxlzl2y562bnoxeyujtm.instabox.tech/live/cctv10.m3u8"],
+["CCTV-11 戏曲","https://19981-agqxfekxlzl2y562bnoxeyujtm.instabox.tech/live/cctv11.m3u8"],
+["CCTV-12 社会与法","https://19981-agqxfekxlzl2y562bnoxeyujtm.instabox.tech/live/cctv12.m3u8"],
+["CCTV-13 新闻","https://19981-agqxfekxlzl2y562bnoxeyujtm.instabox.tech/live/cctv13.m3u8"],
+["CCTV-14 少儿","https://19981-agqxfekxlzl2y562bnoxeyujtm.instabox.tech/live/cctv14.m3u8"],
+["CCTV-15 音乐","https://19981-agqxfekxlzl2y562bnoxeyujtm.instabox.tech/live/cctv15.m3u8"],
+["CCTV-16 奥林匹克","https://19981-agqxfekxlzl2y562bnoxeyujtm.instabox.tech/live/cctv16hd.m3u8"],
+["CCTV-16 奥林匹克4K","https://19981-agqxfekxlzl2y562bnoxeyujtm.instabox.tech/live/cctv164k.m3u8"],
+["CCTV-17 农业农村","https://19981-agqxfekxlzl2y562bnoxeyujtm.instabox.tech/live/cctv17.m3u8"],
+["CCTV-4K 超高清","https://19981-agqxfekxlzl2y562bnoxeyujtm.instabox.tech/live/cctv4k.m3u8"],
+["CCTV-8K 超高清","https://19981-agqxfekxlzl2y562bnoxeyujtm.instabox.tech/live/cctv8k.m3u8"],
+["CGTN 英语","https://19981-agqxfekxlzl2y562bnoxeyujtm.instabox.tech/live/cgtn.m3u8"],
+["CGTN 法语","https://19981-agqxfekxlzl2y562bnoxeyujtm.instabox.tech/live/cgtnfayu.m3u8"],
+["CGTN 俄语","https://19981-agqxfekxlzl2y562bnoxeyujtm.instabox.tech/live/cgtneyu.m3u8"],
+["CGTN 阿拉伯语","https://19981-agqxfekxlzl2y562bnoxeyujtm.instabox.tech/live/cgtnalaboyu.m3u8"],
+["CGTN 西班牙语","https://19981-agqxfekxlzl2y562bnoxeyujtm.instabox.tech/live/cgtnxibanyayu.m3u8"],
+["CGTN 纪录","https://19981-agqxfekxlzl2y562bnoxeyujtm.instabox.tech/live/cgtnwaiyujilu.m3u8"],
+["CCTV 风云剧场","https://19981-agqxfekxlzl2y562bnoxeyujtm.instabox.tech/live/cctvfengyunjuchang.m3u8"],
+["CCTV 第一剧场","https://19981-agqxfekxlzl2y562bnoxeyujtm.instabox.tech/live/cctvdiyijuchang.m3u8"],
+["CCTV 怀旧剧场","https://19981-agqxfekxlzl2y562bnoxeyujtm.instabox.tech/live/cctvhuaijiujuchang.m3u8"],
+// == 卫视组 (YSP-Yang, InstaBox 服务器) ==
+["北京卫视","https://19981-agqxfekxlzl2y562bnoxeyujtm.instabox.tech/live/beijingws.m3u8"],
+["江苏卫视","https://19981-agqxfekxlzl2y562bnoxeyujtm.instabox.tech/live/jiangsuws.m3u8"],
+["东方卫视","https://19981-agqxfekxlzl2y562bnoxeyujtm.instabox.tech/live/dongfangws.m3u8"],
+["浙江卫视","https://19981-agqxfekxlzl2y562bnoxeyujtm.instabox.tech/live/zhejiangws.m3u8"],
+["湖南卫视","https://19981-agqxfekxlzl2y562bnoxeyujtm.instabox.tech/live/hunanws.m3u8"],
+["湖北卫视","https://19981-agqxfekxlzl2y562bnoxeyujtm.instabox.tech/live/hubeiws.m3u8"],
+["广东卫视","https://19981-agqxfekxlzl2y562bnoxeyujtm.instabox.tech/live/guangdongws.m3u8"],
+["广西卫视","https://19981-agqxfekxlzl2y562bnoxeyujtm.instabox.tech/live/guangxiws.m3u8"],
+["黑龙江卫视","https://19981-agqxfekxlzl2y562bnoxeyujtm.instabox.tech/live/heilongjiangws.m3u8"],
+["海南卫视","https://19981-agqxfekxlzl2y562bnoxeyujtm.instabox.tech/live/hainanws.m3u8"],
+["重庆卫视","https://19981-agqxfekxlzl2y562bnoxeyujtm.instabox.tech/live/chongqingws.m3u8"],
+["深圳卫视","https://19981-agqxfekxlzl2y562bnoxeyujtm.instabox.tech/live/shenzhenws.m3u8"],
+["四川卫视","https://19981-agqxfekxlzl2y562bnoxeyujtm.instabox.tech/live/sichuanws.m3u8"],
+["河南卫视","https://19981-agqxfekxlzl2y562bnoxeyujtm.instabox.tech/live/henanws.m3u8"],
+["东南卫视","https://19981-agqxfekxlzl2y562bnoxeyujtm.instabox.tech/live/fujiandongnanws.m3u8"],
+["贵州卫视","https://19981-agqxfekxlzl2y562bnoxeyujtm.instabox.tech/live/guizhouws.m3u8"],
+["江西卫视","https://19981-agqxfekxlzl2y562bnoxeyujtm.instabox.tech/live/jiangxiws.m3u8"],
+["辽宁卫视","https://19981-agqxfekxlzl2y562bnoxeyujtm.instabox.tech/live/liaoningws.m3u8"],
+["安徽卫视","https://19981-agqxfekxlzl2y562bnoxeyujtm.instabox.tech/live/anhuiws.m3u8"],
+["河北卫视","https://19981-agqxfekxlzl2y562bnoxeyujtm.instabox.tech/live/hebeiws.m3u8"],
+["山东卫视","https://19981-agqxfekxlzl2y562bnoxeyujtm.instabox.tech/live/shandongws.m3u8"],
+["天津卫视","https://19981-agqxfekxlzl2y562bnoxeyujtm.instabox.tech/live/tianjinws.m3u8"],
+["吉林卫视","https://19981-agqxfekxlzl2y562bnoxeyujtm.instabox.tech/live/jilinws.m3u8"],
+["陕西卫视","https://19981-agqxfekxlzl2y562bnoxeyujtm.instabox.tech/live/shannxiws.m3u8"],
+["宁夏卫视","https://19981-agqxfekxlzl2y562bnoxeyujtm.instabox.tech/live/ningxiaws.m3u8"],
+["内蒙古卫视","https://19981-agqxfekxlzl2y562bnoxeyujtm.instabox.tech/live/neimengguws.m3u8"],
+["云南卫视","https://19981-agqxfekxlzl2y562bnoxeyujtm.instabox.tech/live/yunnanws.m3u8"],
+["山西卫视","https://19981-agqxfekxlzl2y562bnoxeyujtm.instabox.tech/live/shanxiws.m3u8"],
+["青海卫视","https://19981-agqxfekxlzl2y562bnoxeyujtm.instabox.tech/live/qinghaiws.m3u8"],
+["西藏卫视","https://19981-agqxfekxlzl2y562bnoxeyujtm.instabox.tech/live/xizangws.m3u8"],
+["中国教育电视台一套","https://19981-agqxfekxlzl2y562bnoxeyujtm.instabox.tech/live/cetv1.m3u8"],
+["新疆卫视","https://19981-agqxfekxlzl2y562bnoxeyujtm.instabox.tech/live/xinjiangws.m3u8"]
+];
+var v=document.getElementById('v'),hls=null,nowEl=document.getElementById('now'),errEl=document.getElementById('err'),ov=document.getElementById('bigplay');
+window.addEventListener('message',function(e){if(e.data==='shell:hide'){if(hls)try{hls.stopLoad()}catch(x){}}else if(e.data==='shell:show'){if(hls)try{hls.startLoad()}catch(x){}}});
+function showOv(){ov.style.display='flex'}
+function hideOv(){ov.style.display='none'}
+ov.onclick=function(){var pr=v.play();if(pr&&pr.catch)pr.catch(function(){v.muted=true;v.play().catch(function(){})})};
+v.addEventListener('playing',hideOv);
+function tryPlay(){
+  var pr=v.play();
+  if(pr&&pr.catch)pr.catch(function(){
+    v.muted=true;
+    var pr2=v.play();
+    if(pr2&&pr2.catch)pr2.catch(function(){showOv()});
+  });
+}
+function play(name,url,btn){
+  document.querySelectorAll('button.ch').forEach(function(b){b.classList.remove('active')});
+  if(btn)btn.classList.add('active');
+  nowEl.textContent='正在播放：'+name; errEl.style.display='none'; hideOv();
+  if(hls){hls.destroy();hls=null}
+  if(v.canPlayType('application/vnd.apple.mpegurl')){v.src=url;tryPlay();return}
+  if(Hls.isSupported()){
+    hls=new Hls({liveSyncDurationCount:3});
+    hls.loadSource(url);hls.attachMedia(v);
+    hls.on(Hls.Events.MANIFEST_PARSED,function(){tryPlay()});
+    hls.on(Hls.Events.ERROR,function(e,d){if(d&&d.fatal){errEl.style.display='block'}});
+  }else{errEl.style.display='block'}
+}
+var grid=document.getElementById('grid');
+CHANNELS.forEach(function(c){
+  var b=document.createElement('button');b.className='ch';b.textContent=c[0];
+  b.onclick=function(){play(c[0],c[1],b)};grid.appendChild(b);
+});
+</script>
+</body>
+</html>
