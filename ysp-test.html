@@ -13,8 +13,10 @@ header span{color:#e50914}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;flex:1;align-content:start}
 button.ch{background:#1c1c22;color:#fff;border:1px solid #333;border-radius:12px;padding:16px 6px;font-size:16px;cursor:pointer}
 button.ch.active{background:#e50914;border-color:#e50914}
-.player{flex:2.2;min-width:300px}
+.player{flex:2.2;min-width:300px;position:relative}
 video{width:100%;aspect-ratio:16/9;background:#000;border-radius:12px}
+.bigplay{position:absolute;left:0;top:0;width:100%;aspect-ratio:16/9;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.45);border-radius:12px;cursor:pointer;z-index:2}
+.bigplay span{background:#e50914;color:#fff;font-size:28px;font-weight:bold;padding:18px 30px;border-radius:999px}
 .now{padding:10px 2px;font-size:15px;color:#ccc}
 .err{color:#ff7b7b;font-size:14px;padding:6px 2px;display:none}
 .note{color:#777;font-size:13px;padding:0 18px 16px;line-height:1.6}
@@ -26,6 +28,7 @@ video{width:100%;aspect-ratio:16/9;background:#000;border-radius:12px}
 <div class="wrap">
 <div class="player">
 <video id="v" controls autoplay playsinline></video>
+<div class="bigplay" id="bigplay"><span>▶ 点我播放</span></div>
 <div class="now" id="now">点右侧频道开始看直播</div>
 <div class="err" id="err">这个频道暂时播不了，换一个试试（直播源偶尔会失效）。</div>
 </div>
@@ -101,16 +104,30 @@ var CHANNELS=[
 ];
 var v=document.getElementById('v'),hls=null,nowEl=document.getElementById('now'),errEl=document.getElementById('err');
 window.addEventListener('message',function(e){if(e.data==='shell:hide'){if(hls)try{hls.stopLoad()}catch(x){}}else if(e.data==='shell:show'){if(hls)try{hls.startLoad()}catch(x){}}});
+var ov=document.getElementById('bigplay');
+function showOv(){ov.style.display='flex'}
+function hideOv(){ov.style.display='none'}
+ov.onclick=function(){var pr=v.play();if(pr&&pr.catch)pr.catch(function(){v.muted=true;v.play().catch(function(){})})};
+v.addEventListener('playing',hideOv);
+function tryPlay(){
+  var pr=v.play();
+  if(pr&&pr.catch)pr.catch(function(){
+    v.muted=true;
+    var pr2=v.play();
+    if(pr2&&pr2.catch)pr2.catch(function(){showOv()});
+  });
+}
+
 function play(name,url,btn){
   document.querySelectorAll('button.ch').forEach(function(b){b.classList.remove('active')});
   if(btn)btn.classList.add('active');
-  nowEl.textContent='正在播放：'+name; errEl.style.display='none';
+  nowEl.textContent='正在播放：'+name; errEl.style.display='none'; hideOv();
   if(hls){hls.destroy();hls=null}
-  if(v.canPlayType('application/vnd.apple.mpegurl')){v.src=url;v.play().catch(function(){});return}
+  if(v.canPlayType('application/vnd.apple.mpegurl')){v.src=url;tryPlay();return}
   if(Hls.isSupported()){
     hls=new Hls({liveSyncDurationCount:3});
     hls.loadSource(url);hls.attachMedia(v);
-    hls.on(Hls.Events.MANIFEST_PARSED,function(){var pr=v.play();if(pr&&pr.catch)pr.catch(function(){v.muted=true;v.play().catch(function(){})})});
+    hls.on(Hls.Events.MANIFEST_PARSED,function(){tryPlay()});
     hls.on(Hls.Events.ERROR,function(e,d){if(d&&d.fatal){errEl.style.display='block'}});
   }else{errEl.style.display='block'}
 }
