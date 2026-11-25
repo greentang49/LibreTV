@@ -197,53 +197,120 @@ function loadLrcNE(id,seq){
     fetch(MT+'?server=netease&type=lrc&id='+id).then(function(r){return r.text();}).then(function(t){if(seq===playSeq)parseLrc(t);}).catch(function(){});
   });
 }
-function resolveNE(it,seq){
-  var brs=(Q==='flac')?[999,320]:[320];
-  var k=0;
-  function step(){
-    if(seq!==playSeq)return;
-    if(k>=brs.length){
-      au.src=MT+'?server=netease&type=url&id='+it.id; au.play();
-      msg('此歌高音质取不到，已回落 128k');
-      return;
-    }
-    var br=brs[k]; k++;
-    fetch(GD+'?types=url&source=netease&id='+it.id+'&br='+br).then(function(r){return r.json();}).then(function(j){
-      if(seq!==playSeq)return;
-      if(j&&j.url){
-        au.src=j.url; au.play();
-        msg(br===999?'无损 FLAC 播放中':'320 kbps 高音质播放中');
-      }else{step();}
-    }).catch(function(){step();});
+function resolveUrl(it,cb){
+  if(it.kind==='ne'){
+    var brs=(Q==='flac')?[999,320]:[320];
+    var k=0;
+    (function step(){
+      if(k>=brs.length){cb(MT+'?server=netease&type=url&id='+it.id,'fb128');return;}
+      var br=brs[k]; k++;
+      fetch(GD+'?types=url&source=netease&id='+it.id+'&br='+br).then(function(r){return r.json();}).then(function(j){
+        if(j&&j.url){cb(j.url,br===999?'flac':'320');}
+        else{step();}
+      }).catch(function(){step();});
+    })();
   }
-  step();
+  else if(it.kind==='tx'){
+    fetch(VK+'tencent?id='+it.id).then(function(r){return r.json();}).then(function(j){
+      var u=j&&j.data&&j.data.url;
+      cb(u?https(u):null,'tx');
+    }).catch(function(){cb(null,'tx');});
+  }
 }
-function play(i){
+au.preload='auto';
+var nextBuf={idx:-1,it:null,url:null,tag:null};
+var auPre=document.createElement('audio');
+auPre.preload='auto'; auPre.style.display='none';
+document.body.appendChild(auPre);
+function prefetchNext(){
+  nextBuf={idx:-1,it:null,url:null,tag:null};
+  var ni=cur+1;
+  if(ni<0||ni>=queue.length)return;
+  var it=queue[ni];
+  if(it.kind==='ne'&&!it.id)return;
+  nextBuf.idx=ni; nextBuf.it=it;
+  resolveUrl(it,function(u,tag){
+    if(nextBuf.it!==it||queue[cur+1]!==it)return;
+    nextBuf.url=u; nextBuf.tag=tag;
+    if(u&&tag!=='flac'){try{auPre.src=u; auPre.load();}catch(e){}}
+  });
+}
+var pendingResume=false, lastAdvanceWasCache=false;
+function tryPlay(){
+  try{
+    var p=au.play();
+    if(p&&p.catch){p.catch(function(){pendingResume=true;});}
+  }catch(e){pendingResume=true;}
+}
+function setMediaSession(it){
+  if(!('mediaSession' in navigator))return;
+  try{
+    navigator.mediaSession.metadata=new MediaMetadata({title:it.name||'',artist:it.artist||'',album:'落雪音乐',artwork:it.pic?[{src:it.pic,sizes:'96x96',type:'image/jpeg'}]:[]});
+    navigator.mediaSession.setActionHandler('previoustrack',function(){if(cur>0)play(cur-1);});
+    navigator.mediaSession.setActionHandler('nexttrack',function(){advance();});
+    navigator.mediaSession.setActionHandler('play',function(){tryPlay();});
+    navigator.mediaSession.setActionHandler('pause',function(){au.pause();});
+  }catch(e){}
+}
+function startTrack(i,url,tag,fromCache){
+  cur=i; var it=queue[i];
+  playSeq++; var seq=playSeq;
+  render();
+  $('ptitle').textContent=it.name; $('psinger').textContent=it.artist;
+  $('pcover').src=it.pic||''; $('play').textContent='⏸';
+  lrcLines=[]; $('lrc').innerHTML='';
+  au.src=url; tryPlay();
+  if(tag==='flac')msg('无损 FLAC 播放中');
+  else if(tag==='320')msg('320 kbps 高音质播放中');
+  else if(tag==='fb128')msg('此歌高音质取不到，已回落 128k');
+  else if(tag==='tx')msg(it.pay?'付费歌曲，可能只有试听片段':'QQ 音乐 · 128k');
+  setMediaSession(it);
+  if(it.kind==='ne'&&it.id)loadLrcNE(it.id,seq);
+  lastAdvanceWasCache=!!fromCache;
+  prefetchNext();
+}
+function play(i,forceFresh){
   if(i<0||i>=queue.length)return;
-  cur=i; var it=queue[i]; pushHist(it); render();
+  var it=queue[i]; pushHist(it);
+  if(!forceFresh&&i===nextBuf.idx&&nextBuf.it===it&&nextBuf.url){startTrack(i,nextBuf.url,nextBuf.tag,true);return;}
   playSeq++; var seq=playSeq;
   $('ptitle').textContent=it.name; $('psinger').textContent=it.artist;
   $('pcover').src=it.pic||''; $('play').textContent='⏸';
   lrcLines=[]; $('lrc').innerHTML='';
   msg('加载中...');
-  if(it.kind==='ne'){
-    if(it.id){resolveNE(it,seq); loadLrcNE(it.id,seq);}
-    else{msg('这首缺少编号，无法播放');}
-  }
-  else if(it.kind==='tx'){
-    fetch(VK+'tencent?id='+it.id).then(function(r){return r.json();}).then(function(j){
-      if(seq!==playSeq)return;
-      var u=j.data&&j.data.url;
-      if(!u){msg('这首歌暂时取不到播放地址');return;}
-      au.src=https(u); au.play(); msg(it.pay?'付费歌曲，可能只有试听片段':'QQ 音乐 · 128k');
-    }).catch(function(){msg('播放地址获取失败');});
-  }
+  if(it.kind==='ne'&&!it.id){msg('这首缺少编号，无法播放');return;}
+  resolveUrl(it,function(u,tag){
+    if(seq!==playSeq)return;
+    if(!u){msg('这首歌暂时取不到播放地址');return;}
+    startTrack(i,u,tag,false);
+  });
 }
-$('play').onclick=function(){if(au.src){if(au.paused){au.play();$('play').textContent='⏸';}else{au.pause();$('play').textContent='▶';}}};
-$('next').onclick=function(){if(cur+1<queue.length)play(cur+1);};
+function advance(){
+  if(cur<0)return;
+  if(cur+1<queue.length){play(cur+1);}
+  else{$('play').textContent='▶';}
+}
+$('play').onclick=function(){if(au.src){if(au.paused){tryPlay();$('play').textContent='⏸';}else{au.pause();$('play').textContent='▶';}}};
+$('next').onclick=function(){advance();};
 $('prev').onclick=function(){if(cur>0)play(cur-1);};
-au.addEventListener('ended',function(){if(cur+1<queue.length)play(cur+1);else $('play').textContent='▶';});
-au.addEventListener('error',function(){if(cur>=0)msg('这首播放失败（可能付费/下架），试试下一首');});
+var lastAdvanceAt=0;
+function handleEnded(){
+  var now=Date.now();
+  if(now-lastAdvanceAt<1500)return;
+  lastAdvanceAt=now;
+  advance();
+}
+au.addEventListener('ended',handleEnded);
+document.addEventListener('visibilitychange',function(){
+  if(document.hidden)return;
+  if(au.ended){handleEnded();}
+  else if(pendingResume){pendingResume=false; tryPlay(); $('play').textContent='⏸';}
+});
+au.addEventListener('playing',function(){pendingResume=false;});
+au.addEventListener('error',function(){
+  if(cur>=0&&lastAdvanceWasCache){lastAdvanceWasCache=false; msg('预取地址已失效，正在重新获取'); play(cur,true); return;}
+  if(cur>=0)msg('这首播放失败（可能付费/下架），试试下一首');
+});
 au.addEventListener('timeupdate',function(){
   if(au.duration){$('prog').value=Math.floor(au.currentTime/au.duration*1000);}
   if(lrcLines.length){
